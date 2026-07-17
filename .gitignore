@@ -1,0 +1,6 @@
+data/Fully_Sequenced_2022_2025_Historical_Master.csv
+results/stl_prepared/dataset_prepared_for_training.csv
+results/wavelet/dataset_with_wavelet_decomposition.csv
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

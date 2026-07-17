@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/emmanuela.andam/soil_project/July 7/code/train.py", line 251, in <module>
+    main()
+  File "/home/emmanuela.andam/soil_project/July 7/code/train.py", line 156, in main
+    train_ds = SoilSequenceDataset(df, args.targets, split="train", n_lookback=args.n_lookback,
+TypeError: __init__() got an unexpected keyword argument 'sample_locations'

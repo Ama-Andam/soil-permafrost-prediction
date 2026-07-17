@@ -1,0 +1,5 @@
+2026-07-13 09:53:41,723	INFO worker.py:1660 -- Connecting to existing Ray cluster at address: 10.228.136.53:6379...
+2026-07-13 09:53:41,735	INFO worker.py:1852 -- Connected to Ray cluster.
+[36m(train_and_evaluate_remote pid=523815)[0m /home/emmanuela.andam/soil_project/July 7/code/train.py:54: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:203.)
+[36m(train_and_evaluate_remote pid=523815)[0m   train_X_t = torch.from_numpy(train_X)
+[2026-07-13T12:52:42.089] error: *** JOB 266087 ON talon33 CANCELLED AT 2026-07-13T12:52:42 DUE TO TIME LIMIT ***

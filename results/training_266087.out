@@ -1,0 +1,17 @@
+Job started on talon33 at Mon Jul 13 09:52:32 AM CDT 2026
+Allocated GPUs: 0
+2026-07-13 09:52:39,655	INFO usage_lib.py:467 -- Usage stats collection is enabled by default without user confirmation because this terminal is detected to be non-interactive. To disable this, add `--disable-usage-stats` to the command that starts the cluster, or run the following command: `ray disable-usage-stats` before starting the cluster. See https://docs.ray.io/en/master/cluster/usage-stats.html for more details.
+2026-07-13 09:52:39,655	INFO scripts.py:861 -- Local node IP: 10.228.136.53
+2026-07-13 09:52:42,658	SUCC scripts.py:897 -- --------------------
+2026-07-13 09:52:42,658	SUCC scripts.py:898 -- Ray runtime started.
+2026-07-13 09:52:42,658	SUCC scripts.py:899 -- --------------------
+2026-07-13 09:52:42,658	INFO scripts.py:901 -- Next steps
+2026-07-13 09:52:42,658	INFO scripts.py:904 -- To add another node to this Ray cluster, run
+2026-07-13 09:52:42,658	INFO scripts.py:907 --   ray start --address='10.228.136.53:6379'
+2026-07-13 09:52:42,658	INFO scripts.py:916 -- To connect to this Ray cluster:
+2026-07-13 09:52:42,658	INFO scripts.py:918 -- import ray
+2026-07-13 09:52:42,658	INFO scripts.py:919 -- ray.init()
+2026-07-13 09:52:42,658	INFO scripts.py:950 -- To terminate the Ray runtime, run
+2026-07-13 09:52:42,658	INFO scripts.py:951 --   ray stop
+2026-07-13 09:52:42,658	INFO scripts.py:954 -- To view the status of the cluster, use
+2026-07-13 09:52:42,658	INFO scripts.py:955 --   ray status

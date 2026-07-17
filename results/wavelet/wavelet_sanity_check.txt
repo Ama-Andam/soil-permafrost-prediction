@@ -1,0 +1,2 @@
+soil_temperature_0_to_7cm: max reconstruction error = 3.55e-15 (should be ~0)
+soil_moisture_0_to_7cm: max reconstruction error = 1.39e-17 (should be ~0)
