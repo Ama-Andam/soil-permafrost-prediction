@@ -1,1 +1,2411 @@
+# ============================================================
+# COMPARATIVE EDA CODEBOOK
+# Project: Distributed AI - Soil Temperature and Moisture
+# Datasets:
+#   Dataset 1: Alaska_2000-2025.csv
+#   Dataset 2: Fully_Sequenced_2022_2025_Historical_Master.csv
+# Objective: Extensive spatial and temporal EDA
+#            to characterise both datasets fully
+# ============================================================
+
+import os
+import sys
+import time
+import warnings
+import subprocess
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+from scipy import stats
+from pathlib import Path
+
+warnings.filterwarnings('ignore')
+SEED = 42
+np.random.seed(SEED)
+
+# Output directories
+DIRS = [
+    './figures/eda_comparison',
+    './results/eda_comparison',
+    './logs',
+]
+for d in DIRS:
+    os.makedirs(d, exist_ok=True)
+
+FIG_DIR = Path('./figures/eda_comparison')
+RES_DIR = Path('./results/eda_comparison')
+
+# Install required packages
+def install_if_missing(package, pip_name=None):
+    pip_name = pip_name or package
+    try:
+        __import__(package)
+    except ImportError:
+        print(f"Installing {pip_name}...")
+        subprocess.run(
+            [sys.executable, '-m', 'pip',
+             'install', '--user',
+             pip_name, '-q'],
+            capture_output=True)
+
+for pkg, pip in [
+    ('sklearn',  'scikit-learn'),
+    ('scipy',    'scipy'),
+    ('seaborn',  'seaborn'),
+]:
+    install_if_missing(pkg, pip)
+
+plt.rcParams.update({
+    'figure.dpi'        : 150,
+    'font.size'         : 11,
+    'axes.grid'         : True,
+    'grid.alpha'        : 0.3,
+    'axes.spines.top'   : False,
+    'axes.spines.right' : False,
+    'font.family'       : 'sans-serif',
+})
+
+print("=" * 60)
+print("  COMPARATIVE EDA SETUP COMPLETE")
+print("=" * 60)
+print(f"  Python  : {sys.version.split()[0]}")
+print(f"  Numpy   : {np.__version__}")
+print(f"  Pandas  : {pd.__version__}")
+
+
+
+# ============================================================
+# SECTION 1: LOAD BOTH DATASETS
+# ============================================================
+
+print("Loading Dataset 1: Alaska_2000-2025.csv")
+print("=" * 55)
+
+PATH_DS1 = "/home/emmanuel.keku/Alaska_2000-2025.csv"
+PATH_DS2 = (
+    "/home/emmanuel.keku/"
+    "Fully_Sequenced_2022_2025_"
+    "Historical_Master.csv"
+)
+
+# Dataset 1
+t0 = time.time()
+try:
+    df1 = pd.read_csv(PATH_DS1)
+    print(f"  Loaded  : {len(df1):,} rows")
+    print(f"  Columns : {df1.shape[1]}")
+    print(f"  Time    : {time.time()-t0:.1f}s")
+except FileNotFoundError:
+    print(f"  File not found: {PATH_DS1}")
+    print("  Update PATH_DS1 to correct location")
+    df1 = None
+
+# Dataset 2
+print(f"\nLoading Dataset 2: "
+      f"Fully_Sequenced_2022_2025_"
+      f"Historical_Master.csv")
+print("=" * 55)
+t0 = time.time()
+try:
+    df2 = pd.read_csv(PATH_DS2, header=1)
+    print(f"  Loaded  : {len(df2):,} rows")
+    print(f"  Columns : {df2.shape[1]}")
+    print(f"  Time    : {time.time()-t0:.1f}s")
+except FileNotFoundError:
+    print(f"  File not found: {PATH_DS2}")
+    df2 = None
+
+
+
+# ============================================================
+# SECTION 2: FULL COLUMN INVENTORY — BOTH DATASETS
+# ============================================================
+
+def full_column_inventory(df, name):
+    """
+    Print a complete column inventory for a dataset.
+    Reports: column name, dtype, missing count,
+    missing percent, unique count, min, max.
+    """
+    print(f"\n{'='*70}")
+    print(f"  COLUMN INVENTORY: {name}")
+    print(f"  Total rows    : {len(df):,}")
+    print(f"  Total columns : {df.shape[1]}")
+    print(f"{'='*70}")
+    print(
+        f"  {'Column':<35} {'dtype':<12} "
+        f"{'NaN N':>8} {'NaN%':>7} "
+        f"{'Unique':>8}")
+    print("  " + "-" * 72)
+
+    for col in df.columns:
+        dtype   = str(df[col].dtype)
+        n_nan   = int(df[col].isna().sum())
+        pct_nan = round(100 * n_nan / len(df), 2)
+        n_uniq  = int(df[col].nunique())
+        flag    = " WARNING" \
+            if pct_nan > 20 else ""
+        print(
+            f"  {col:<35} {dtype:<12} "
+            f"{n_nan:>8,} {pct_nan:>6.2f}% "
+            f"{n_uniq:>8,}{flag}")
+
+    # Identify column groups
+    spatial_candidates = [
+        c for c in df.columns
+        if any(k in c.lower() for k in
+               ['lat', 'lon', 'node',
+                'x', 'y', 'coord',
+                'location', 'site',
+                'grid', 'spatial'])
+    ]
+    temporal_candidates = [
+        c for c in df.columns
+        if any(k in c.lower() for k in
+               ['time', 'date', 'year',
+                'month', 'hour', 'day',
+                'timestamp'])
+    ]
+    temp_candidates = [
+        c for c in df.columns
+        if any(k in c.lower() for k in
+               ['temp', 'soil_temp',
+                'temperature'])
+    ]
+    moist_candidates = [
+        c for c in df.columns
+        if any(k in c.lower() for k in
+               ['moist', 'moisture',
+                'sm_', 'sm_surface',
+                'rootzone'])
+    ]
+
+    print(f"\n  DETECTED COLUMN GROUPS:")
+    print(f"  Spatial    ({len(spatial_candidates)}): "
+          f"{spatial_candidates}")
+    print(f"  Temporal   ({len(temporal_candidates)}): "
+          f"{temporal_candidates}")
+    print(f"  Temperature({len(temp_candidates)}): "
+          f"{temp_candidates}")
+    print(f"  Moisture   ({len(moist_candidates)}): "
+          f"{moist_candidates}")
+
+    return {
+        'spatial'    : spatial_candidates,
+        'temporal'   : temporal_candidates,
+        'temperature': temp_candidates,
+        'moisture'   : moist_candidates,
+    }
+
+
+if df1 is not None:
+    groups1 = full_column_inventory(
+        df1, "Dataset 1: Alaska_2000-2025")
+
+if df2 is not None:
+    groups2 = full_column_inventory(
+        df2,
+        "Dataset 2: Fully_Sequenced_2022_2025")
+
+
+
+# ============================================================
+# SECTION 3: DATETIME PARSING AND TEMPORAL COVERAGE
+# ============================================================
+
+def parse_and_describe_time(df, name,
+                              time_candidates):
+    """
+    Identify and parse datetime columns.
+    Report temporal coverage and resolution.
+    """
+    print(f"\n{'='*65}")
+    print(f"  TEMPORAL COVERAGE: {name}")
+    print(f"{'='*65}")
+
+    for col in time_candidates:
+        if col not in df.columns:
+            continue
+        try:
+            dt_col = pd.to_datetime(
+                df[col], utc=True,
+                errors='coerce')
+            n_valid  = dt_col.notna().sum()
+            n_null   = dt_col.isna().sum()
+            dt_min   = dt_col.min()
+            dt_max   = dt_col.max()
+            n_days   = (dt_max - dt_min).days
+            n_unique = dt_col.nunique()
+
+            print(f"\n  Column    : {col}")
+            print(f"  Valid     : {n_valid:,}")
+            print(f"  Null      : {n_null:,}")
+            print(f"  Start     : {dt_min}")
+            print(f"  End       : {dt_max}")
+            print(f"  Span      : {n_days} days "
+                  f"({n_days/365.25:.1f} years)")
+            print(f"  Unique ts : {n_unique:,}")
+
+            # Detect temporal resolution
+            dt_sorted = dt_col.dropna().sort_values()
+            if len(dt_sorted) > 1:
+                diffs = dt_sorted.diff().dropna()
+                mode_diff = (diffs
+                             .value_counts()
+                             .index[0])
+                print(f"  Resolution: {mode_diff}")
+
+            # Years present
+            years = sorted(
+                dt_col.dt.year.dropna()
+                .astype(int).unique())
+            print(f"  Years     : {years}")
+
+        except Exception as e:
+            print(f"  Could not parse {col}: {e}")
+
+
+if df1 is not None and 'groups1' in dir():
+    parse_and_describe_time(
+        df1,
+        "Dataset 1",
+        groups1['temporal'])
+
+if df2 is not None and 'groups2' in dir():
+    # Known time column for Dataset 2
+    df2['time_utc'] = pd.to_datetime(
+        df2['time_utc'], utc=True,
+        errors='coerce')
+    parse_and_describe_time(
+        df2,
+        "Dataset 2",
+        ['time_utc'] + groups2['temporal'])
+
+
+
+# ============================================================
+# SECTION 4: SPATIAL COVERAGE ANALYSIS
+# The senior concern: does the new dataset have
+# sufficient spatial representation?
+# ============================================================
+
+def analyse_spatial_coverage(df, name,
+                               spatial_cols):
+    """
+    Full spatial coverage analysis.
+    Reports: unique locations, coordinate ranges,
+    grid density, spatial resolution.
+    """
+    print(f"\n{'='*65}")
+    print(f"  SPATIAL COVERAGE ANALYSIS: {name}")
+    print(f"{'='*65}")
+
+    # Latitude and Longitude
+    lat_cols = [
+        c for c in spatial_cols
+        if 'lat' in c.lower()
+        and c in df.columns]
+    lon_cols = [
+        c for c in spatial_cols
+        if 'lon' in c.lower()
+        and c in df.columns]
+
+    if lat_cols and lon_cols:
+        lat_col = lat_cols[0]
+        lon_col = lon_cols[0]
+
+        lat = df[lat_col].dropna()
+        lon = df[lon_col].dropna()
+
+        print(f"\n  Geographic coordinates:")
+        print(f"  Latitude  range : "
+              f"{lat.min():.4f} to "
+              f"{lat.max():.4f}")
+        print(f"  Longitude range : "
+              f"{lon.min():.4f} to "
+              f"{lon.max():.4f}")
+        print(f"  Latitude  span  : "
+              f"{(lat.max()-lat.min()):.4f} deg")
+        print(f"  Longitude span  : "
+              f"{(lon.max()-lon.min()):.4f} deg")
+
+        # Unique locations
+        unique_locs = (
+            df[[lat_col, lon_col]]
+            .dropna()
+            .drop_duplicates())
+        print(f"  Unique locations: "
+              f"{len(unique_locs):,}")
+
+        # Spatial resolution estimate
+        if len(unique_locs) > 1:
+            lat_res = np.diff(
+                np.sort(unique_locs[lat_col]
+                        .unique())
+            ).mean() if (
+                unique_locs[lat_col]
+                .nunique() > 1) else np.nan
+            lon_res = np.diff(
+                np.sort(unique_locs[lon_col]
+                        .unique())
+            ).mean() if (
+                unique_locs[lon_col]
+                .nunique() > 1) else np.nan
+            print(f"  Mean lat step   : "
+                  f"{lat_res:.4f} deg")
+            print(f"  Mean lon step   : "
+                  f"{lon_res:.4f} deg")
+    else:
+        print("  No latitude/longitude columns found.")
+        print(f"  Spatial columns present: "
+              f"{spatial_cols}")
+
+    # SMAP node grid (Dataset 2 specific)
+    node_x_cols = [
+        c for c in df.columns
+        if 'node_x' in c.lower()
+        or 'smap_x' in c.lower()]
+    node_y_cols = [
+        c for c in df.columns
+        if 'node_y' in c.lower()
+        or 'smap_y' in c.lower()]
+
+    if node_x_cols and node_y_cols:
+        nx = df[node_x_cols[0]].dropna()
+        ny = df[node_y_cols[0]].dropna()
+        print(f"\n  SMAP node grid:")
+        print(f"  Node X range    : "
+              f"{int(nx.min())} to "
+              f"{int(nx.max())}")
+        print(f"  Node Y range    : "
+              f"{int(ny.min())} to "
+              f"{int(ny.max())}")
+        print(f"  Unique X nodes  : "
+              f"{nx.nunique()}")
+        print(f"  Unique Y nodes  : "
+              f"{ny.nunique()}")
+        unique_nodes = (
+            df[[node_x_cols[0],
+                node_y_cols[0]]]
+            .dropna()
+            .drop_duplicates())
+        print(f"  Total SMAP nodes: "
+              f"{len(unique_nodes):,}")
+
+    # Site column
+    site_cols = [
+        c for c in df.columns
+        if c.lower() == 'site'
+        or 'site' in c.lower()]
+    if site_cols:
+        site_col = site_cols[0]
+        sites = df[site_col].value_counts()
+        print(f"\n  Site distribution:")
+        for site, count in sites.items():
+            pct = 100 * count / len(df)
+            print(f"    {site:<25}: "
+                  f"{count:>8,} "
+                  f"({pct:.1f}%)")
+
+    return unique_locs if (
+        lat_cols and lon_cols) else None
+
+
+if df1 is not None and 'groups1' in dir():
+    locs1 = analyse_spatial_coverage(
+        df1,
+        "Dataset 1: Alaska 2000-2025",
+        groups1['spatial'])
+
+if df2 is not None and 'groups2' in dir():
+    locs2 = analyse_spatial_coverage(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025",
+        groups2['spatial'])
+
+
+
+# ============================================================
+# SECTION 5: SIDE-BY-SIDE DATASET COMPARISON TABLE
+# ============================================================
+
+def build_comparison_table(df1, name1,
+                            df2, name2):
+    """
+    Build a structured side-by-side comparison
+    of the two datasets on all key dimensions.
+    """
+    print(f"\n{'='*70}")
+    print(f"  SIDE-BY-SIDE DATASET COMPARISON")
+    print(f"{'='*70}")
+    print(f"  {'Dimension':<35} "
+          f"{name1:<20} {name2:<20}")
+    print("  " + "-" * 75)
+
+    def safe_get(df, func, default='N/A'):
+        try:
+            return func(df)
+        except Exception:
+            return default
+
+    rows = [
+        ("Total rows",
+         f"{len(df1):,}" if df1 is not None
+         else "N/A",
+         f"{len(df2):,}" if df2 is not None
+         else "N/A"),
+        ("Total columns",
+         str(df1.shape[1]) if df1 is not None
+         else "N/A",
+         str(df2.shape[1]) if df2 is not None
+         else "N/A"),
+        ("Missing values any column",
+         str(df1.isna().any(axis=1).sum()
+             if df1 is not None else "N/A"),
+         str(df2.isna().any(axis=1).sum()
+             if df2 is not None else "N/A")),
+        ("Unique sites",
+         str(df1['Site'].nunique()
+             if df1 is not None
+             and 'Site' in df1.columns
+             else "check col name"),
+         str(df2['Site'].nunique()
+             if df2 is not None
+             and 'Site' in df2.columns
+             else "check col name")),
+        ("Unique lat/lon locations",
+         "check column names",
+         "256 (from prior analysis)"),
+        ("SMAP node grid",
+         "not applicable",
+         "228 nodes (12x19)"),
+        ("Has SMAP satellite data",
+         "check columns",
+         "yes (Temp_K, SM_Surface, etc.)"),
+        ("Has topography data",
+         "check columns",
+         "yes (elevation, slope, roughness)"),
+        ("Has weather station data",
+         "check columns",
+         "yes (temperature_2m, precip)"),
+        ("Date range start",
+         "2000 (expected)",
+         "2022-01-01"),
+        ("Date range end",
+         "2025 (expected)",
+         "2025-12-31"),
+        ("Temporal resolution",
+         "check",
+         "hourly"),
+        ("Soil temperature targets",
+         "check",
+         "4 SMAP layers + weather station"),
+        ("Soil moisture targets",
+         "check",
+         "SM_Surface, SM_Rootzone, weather"),
+        ("Spatial coordinates present",
+         "check",
+         "yes - lat, lon, node_x, node_y"),
+    ]
+
+    for label, v1, v2 in rows:
+        print(f"  {label:<35} {str(v1):<20} "
+              f"{str(v2):<20}")
+
+    print(f"\n  SPATIAL ADEQUACY ASSESSMENT:")
+    print(f"  Dataset 2 has {len(locs2):,} "
+          f"unique lat/lon locations")
+    print(f"  Dataset 2 has SMAP node grid "
+          f"providing additional spatial structure")
+    print(f"  Senior concern: verify whether "
+          f"spatial variation is meaningful")
+    print(f"  or whether all locations share "
+          f"identical values per timestep")
+
+    # Check if values vary across locations
+    # at the same timestamp
+    if df2 is not None:
+        sample_time = (
+            df2['time_utc'].dropna()
+            .iloc[len(df2) // 2])
+        same_time = df2[
+            df2['time_utc'] == sample_time]
+        print(f"\n  SPATIAL VARIATION CHECK")
+        print(f"  Sample timestamp: {sample_time}")
+        print(f"  Records at that time: "
+              f"{len(same_time)}")
+
+        for col in [
+            'soil_temperature_0_to_7cm',
+            'Soil_Temp_L1',
+            'SM_Surface',
+            'elevation_m',
+            'Latitude',
+            'Longitude',
+        ]:
+            if col not in same_time.columns:
+                continue
+            vals = same_time[col].dropna()
+            if len(vals) < 2:
+                continue
+            std_val  = vals.std()
+            mean_val = vals.mean()
+            cv       = (abs(std_val / mean_val)
+                        * 100
+                        if mean_val != 0
+                        else 0)
+            verdict = (
+                "VARIES SPATIALLY"
+                if std_val > 0.001
+                else "IDENTICAL ACROSS LOCATIONS")
+            print(f"    {col:<35}: "
+                  f"std={std_val:.4f} "
+                  f"cv={cv:.2f}% "
+                  f"-- {verdict}")
+
+
+
+# ============================================================
+# SECTION 6: STATISTICAL SUMMARY OF ALL VARIABLES
+# Both datasets — full descriptive statistics
+# ============================================================
+
+def full_descriptive_stats(df, name,
+                            numeric_cols=None):
+    """
+    Compute and print full descriptive statistics
+    for all numeric columns.
+    Reports: count, mean, std, min, quartiles,
+    max, skewness, kurtosis, percent below zero.
+    """
+    print(f"\n{'='*70}")
+    print(f"  DESCRIPTIVE STATISTICS: {name}")
+    print(f"{'='*70}")
+
+    if numeric_cols is None:
+        numeric_cols = (
+            df.select_dtypes(
+                include=[np.number])
+            .columns.tolist())
+
+    # Remove index-like columns
+    numeric_cols = [
+        c for c in numeric_cols
+        if df[c].nunique() > 5]
+
+    desc = df[numeric_cols].describe().T
+    desc['skewness']   = (
+        df[numeric_cols].skew())
+    desc['kurtosis']   = (
+        df[numeric_cols].kurtosis())
+    desc['pct_below_0']= (
+        (df[numeric_cols] < 0).mean() * 100)
+    desc['pct_missing']= (
+        df[numeric_cols].isna().mean() * 100)
+
+    print(desc.round(4).to_string())
+
+    return desc
+
+
+if df1 is not None:
+    # Identify numeric columns for Dataset 1
+    num_cols1 = (
+        df1.select_dtypes(
+            include=[np.number])
+        .columns.tolist())
+    stats1 = full_descriptive_stats(
+        df1,
+        "Dataset 1: Alaska 2000-2025",
+        num_cols1)
+
+if df2 is not None:
+    # Known numeric columns for Dataset 2
+    num_cols2 = [
+        'temperature_2m',
+        'precipitation',
+        'snow_depth_weather',
+        'soil_temperature_0_to_7cm',
+        'soil_moisture_0_to_7cm',
+        'Temp_K',
+        'SM_Surface',
+        'SM_Rootzone',
+        'Pressure',
+        'Greenness',
+        'Snow_Depth_SMAP',
+        'Soil_Temp_L1',
+        'Soil_Temp_L2',
+        'Soil_Temp_L3',
+        'Soil_Temp_L4',
+        'elevation_m',
+        'elev_roughness_m',
+        'slope_deg',
+        'Latitude',
+        'Longitude',
+    ]
+    num_cols2 = [
+        c for c in num_cols2
+        if c in df2.columns]
+    stats2 = full_descriptive_stats(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025",
+        num_cols2)
+
+
+
+# ============================================================
+# SECTION 7: MISSING VALUE ANALYSIS — BOTH DATASETS
+# ============================================================
+
+def missing_value_analysis(df, name):
+    """
+    Detailed missing value analysis.
+    Reports counts, percentages, and patterns.
+    Identifies columns that may be unusable.
+    """
+    print(f"\n{'='*65}")
+    print(f"  MISSING VALUE ANALYSIS: {name}")
+    print(f"{'='*65}")
+
+    total_cells = df.shape[0] * df.shape[1]
+    total_miss  = df.isna().sum().sum()
+    pct_overall = 100 * total_miss / total_cells
+
+    print(f"\n  Total cells   : {total_cells:,}")
+    print(f"  Missing cells : {total_miss:,}")
+    print(f"  Overall pct   : {pct_overall:.2f}%")
+
+    # Per column
+    miss_df = pd.DataFrame({
+        'column'       : df.columns,
+        'missing_n'    : df.isna().sum().values,
+        'missing_pct'  : (
+            df.isna().mean() * 100).values,
+        'dtype'        : df.dtypes.values,
+    }).sort_values(
+        'missing_pct', ascending=False)
+
+    print(f"\n  {'Column':<35} "
+          f"{'Missing N':>10} "
+          f"{'Missing%':>10} "
+          f"{'Status':>15}")
+    print("  " + "-" * 72)
+
+    for _, row in miss_df.iterrows():
+        pct    = row['missing_pct']
+        status = (
+            "CRITICAL (>50%)"
+            if pct > 50
+            else "HIGH (>20%)"
+            if pct > 20
+            else "MODERATE (>5%)"
+            if pct > 5
+            else "LOW (<5%)"
+            if pct > 0
+            else "COMPLETE")
+        print(f"  {row['column']:<35} "
+              f"{int(row['missing_n']):>10,} "
+              f"{pct:>9.2f}% "
+              f"{status:>15}")
+
+    # Rows with any missing value
+    rows_with_miss = df.isna().any(axis=1).sum()
+    print(f"\n  Rows with any missing: "
+          f"{rows_with_miss:,} "
+          f"({100*rows_with_miss/len(df):.2f}%)")
+    print(f"  Rows fully complete  : "
+          f"{len(df) - rows_with_miss:,} "
+          f"({100*(len(df)-rows_with_miss)/len(df):.2f}%)")
+
+
+if df1 is not None:
+    missing_value_analysis(
+        df1, "Dataset 1: Alaska 2000-2025")
+
+if df2 is not None:
+    missing_value_analysis(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025")
+
+
+
+# ============================================================
+# SECTION 8: EDA FIGURES — DATASET 1
+# Covers all key variables in Dataset 1
+# ============================================================
+
+if df1 is not None:
+
+    # Identify numeric and time columns
+    num_cols1 = (
+        df1.select_dtypes(
+            include=[np.number])
+        .columns.tolist())
+
+    time_col1 = None
+    for c in df1.columns:
+        if 'time' in c.lower() or \
+                'date' in c.lower():
+            try:
+                df1[c] = pd.to_datetime(
+                    df1[c], errors='coerce')
+                time_col1 = c
+                break
+            except Exception:
+                pass
+
+    # DS1-FIG01: Distribution of all numeric
+    n_cols_plot = min(len(num_cols1), 12)
+    cols_to_plot = num_cols1[:n_cols_plot]
+    n_rows = (n_cols_plot + 3) // 4
+
+    fig, axes = plt.subplots(
+        n_rows, 4,
+        figsize=(22, 5 * n_rows))
+    axes_flat = axes.flatten()
+
+    for idx, col in enumerate(cols_to_plot):
+        ax   = axes_flat[idx]
+        data = df1[col].dropna()
+
+        ax.hist(data, bins=60,
+                color='steelblue',
+                alpha=0.75,
+                edgecolor='white',
+                linewidth=0.3,
+                density=True)
+        ax.axvline(data.mean(),
+                   color='red', ls='--',
+                   lw=1.5,
+                   label=f'Mean={data.mean():.2f}')
+        ax.axvline(data.median(),
+                   color='black', ls=':',
+                   lw=1.5,
+                   label=f'Median={data.median():.2f}')
+        ax.set_title(col, fontweight='bold',
+                     fontsize=9)
+        ax.set_ylabel('Density', fontsize=8)
+        ax.legend(fontsize=7)
+
+    for i in range(
+            n_cols_plot, len(axes_flat)):
+        axes_flat[i].set_visible(False)
+
+    fig.suptitle(
+        'Dataset 1: Alaska 2000-2025\n'
+        'Distribution of All Numeric Variables',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR / 'DS1_01_distributions.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS1_01_distributions.png")
+
+
+    # DS1-FIG02: Time series of key variables
+    if time_col1 is not None:
+        temp_cols1 = [
+            c for c in df1.columns
+            if 'temp' in c.lower()
+            or 'soil' in c.lower()]
+        temp_cols1 = temp_cols1[:4]
+
+        if temp_cols1:
+            fig, axes = plt.subplots(
+                len(temp_cols1), 1,
+                figsize=(18,
+                         4 * len(temp_cols1)),
+                sharex=True)
+            if len(temp_cols1) == 1:
+                axes = [axes]
+
+            for ax, col in zip(axes,
+                                temp_cols1):
+                df1_sorted = df1.sort_values(
+                    time_col1)
+                ax.plot(
+                    df1_sorted[time_col1],
+                    df1_sorted[col],
+                    lw=0.5, alpha=0.7,
+                    color='steelblue')
+                ax.set_ylabel(col, fontsize=9)
+                ax.axhline(
+                    0, color='grey',
+                    ls='--', lw=0.8,
+                    alpha=0.6)
+
+            axes[-1].set_xlabel(
+                'Date', fontsize=10)
+            fig.suptitle(
+                'Dataset 1: Alaska 2000-2025\n'
+                'Time Series of Key Variables',
+                fontsize=13, fontweight='bold')
+            plt.tight_layout()
+            plt.savefig(
+                FIG_DIR /
+                'DS1_02_timeseries.png',
+                dpi=150,
+                bbox_inches='tight')
+            plt.show()
+            print("Saved: DS1_02_timeseries.png")
+
+
+    # DS1-FIG03: Correlation matrix
+    if len(num_cols1) > 1:
+        corr_cols = num_cols1[:15]
+        corr_mat  = (
+            df1[corr_cols]
+            .dropna()
+            .sample(min(30000, len(df1)),
+                    random_state=SEED)
+            .corr()
+            .round(3))
+
+        fig, ax = plt.subplots(
+            figsize=(14, 12))
+        mask = np.triu(
+            np.ones_like(corr_mat, dtype=bool))
+        sns.heatmap(
+            corr_mat, mask=mask,
+            annot=True, fmt='.2f',
+            cmap='RdBu_r', center=0,
+            vmin=-1, vmax=1,
+            linewidths=0.3,
+            linecolor='white',
+            annot_kws={'size': 7},
+            cbar_kws={'label': 'Pearson r',
+                      'shrink': 0.8},
+            ax=ax)
+        ax.set_title(
+            'Dataset 1: Correlation Matrix',
+            fontweight='bold', fontsize=12)
+        ax.tick_params(
+            axis='x', rotation=45,
+            labelsize=8)
+        ax.tick_params(
+            axis='y', rotation=0,
+            labelsize=8)
+        plt.tight_layout()
+        plt.savefig(
+            FIG_DIR / 'DS1_03_correlation.png',
+            dpi=150, bbox_inches='tight')
+        plt.show()
+        print("Saved: DS1_03_correlation.png")
+
+
+
+
+# ============================================================
+# SECTION 9: EDA FIGURES — DATASET 2
+# Covers all variable groups [1]
+# ============================================================
+
+if df2 is not None:
+
+    SITE_COLORS = {
+        site: plt.cm.tab10(i)
+        for i, site in enumerate(
+            df2['Site'].unique()
+        )
+    }
+
+    # DS2-FIG01: Target distributions
+    targets2 = [
+        'soil_temperature_0_to_7cm',
+        'Soil_Temp_L1',
+        'Soil_Temp_L2',
+        'Soil_Temp_L3',
+        'Soil_Temp_L4',
+        'soil_moisture_0_to_7cm',
+        'SM_Surface',
+        'SM_Rootzone',
+    ]
+    targets2 = [
+        t for t in targets2
+        if t in df2.columns]
+
+    fig, axes = plt.subplots(
+        2, 4, figsize=(22, 12))
+    axes_flat = axes.flatten()
+
+    for idx, tgt in enumerate(targets2):
+        if idx >= len(axes_flat):
+            break
+        ax   = axes_flat[idx]
+        data = df2[tgt].dropna()
+
+        ax.hist(data, bins=80,
+                color='steelblue',
+                alpha=0.75,
+                edgecolor='white',
+                linewidth=0.3,
+                density=True)
+        ax.axvline(data.mean(),
+                   color='red', ls='--',
+                   lw=1.5,
+                   label=f'Mean={data.mean():.2f}')
+        ax.axvline(data.median(),
+                   color='black', ls=':',
+                   lw=1.5,
+                   label=f'Median={data.median():.2f}')
+
+        if ('temp' in tgt.lower() or
+                'Temp' in tgt):
+            ax.axvline(
+                0, color='grey',
+                ls='-', lw=1, alpha=0.6)
+            pct = 100 * (data < 0).mean()
+            ax.text(
+                0.02, 0.95,
+                f'{pct:.1f}% below 0',
+                transform=ax.transAxes,
+                fontsize=8, va='top',
+                color='blue')
+
+        ax.set_title(
+            tgt.replace(
+                'soil_temperature_', 'st_')
+            .replace(
+                'soil_moisture_', 'sm_'),
+            fontweight='bold', fontsize=9)
+        ax.set_ylabel('Density', fontsize=8)
+        ax.legend(fontsize=7)
+
+    for i in range(
+            len(targets2), len(axes_flat)):
+        axes_flat[i].set_visible(False)
+
+    fig.suptitle(
+        'Dataset 2: Target Variable '
+        'Distributions\n'
+        'Weather Station and SMAP '
+        'Satellite Data',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_01_target_distributions.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_01_target_distributions.png")
+
+
+    # DS2-FIG02: Time series by site [1]
+    tgts_ts = [
+        'soil_temperature_0_to_7cm',
+        'Soil_Temp_L1',
+        'soil_moisture_0_to_7cm',
+        'SM_Surface',
+    ]
+    tgts_ts = [t for t in tgts_ts
+               if t in df2.columns]
+
+    fig, axes = plt.subplots(
+        len(tgts_ts), 1,
+        figsize=(18, 4 * len(tgts_ts)),
+        sharex=True)
+    if len(tgts_ts) == 1:
+        axes = [axes]
+
+    for ax, tgt in zip(axes, tgts_ts):
+        for site, grp in df2.groupby('Site'):
+            sm = (
+                grp.set_index('time_utc')[tgt]
+                .resample('D').mean())
+            ax.plot(
+                sm.index, sm.values,
+                lw=0.8, alpha=0.7,
+                color=SITE_COLORS.get(
+                    site, 'grey'),
+                label=site)
+        ax.axhline(
+            0, color='grey',
+            ls='--', lw=0.8, alpha=0.6)
+        ax.set_ylabel(tgt, fontsize=9)
+        ax.legend(
+            fontsize=7, ncol=4,
+            loc='upper right')
+
+    axes[-1].set_xlabel('Date', fontsize=10)
+    fig.suptitle(
+        'Dataset 2: Daily Mean Time Series '
+        'by Site\n2022-2025',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_02_timeseries_by_site.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_02_timeseries_by_site.png")
+
+
+    # DS2-FIG03: Spatial maps
+    fig, axes = plt.subplots(
+        1, 2, figsize=(18, 7))
+
+    loc_mean = (
+        df2.groupby(
+            ['Latitude', 'Longitude', 'Site'])
+        ['soil_temperature_0_to_7cm']
+        .mean()
+        .reset_index()
+    )
+
+    sc1 = axes[0].scatter(
+        loc_mean['Longitude'],
+        loc_mean['Latitude'],
+        c          = loc_mean[
+            'soil_temperature_0_to_7cm'],
+        cmap       = 'RdBu_r',
+        s          = 40,
+        alpha      = 0.8,
+        edgecolors = 'black',
+        linewidth  = 0.3)
+    plt.colorbar(
+        sc1, ax=axes[0],
+        label='Mean Soil Temp (deg C)')
+    axes[0].set_xlabel(
+        'Longitude', fontsize=10)
+    axes[0].set_ylabel(
+        'Latitude', fontsize=10)
+    axes[0].set_title(
+        'Dataset 2: Spatial Distribution\n'
+        'Mean Soil Temperature (0-7cm)',
+        fontweight='bold', fontsize=11)
+
+    node_mean = (
+        df2.groupby(
+            ['smap_node_x', 'smap_node_y'])
+        ['SM_Surface']
+        .mean()
+        .reset_index()
+    )
+    sc2 = axes[1].scatter(
+        node_mean['smap_node_y'],
+        node_mean['smap_node_x'],
+        c          = node_mean['SM_Surface'],
+        cmap       = 'Blues',
+        s          = 50,
+        alpha      = 0.8,
+        edgecolors = 'black',
+        linewidth  = 0.3)
+    plt.colorbar(
+        sc2, ax=axes[1],
+        label='Mean SM Surface (m3/m3)')
+    axes[1].set_xlabel(
+        'SMAP Node Y', fontsize=10)
+    axes[1].set_ylabel(
+        'SMAP Node X', fontsize=10)
+    axes[1].set_title(
+        'Dataset 2: SMAP Node Grid\n'
+        'Mean Surface Soil Moisture',
+        fontweight='bold', fontsize=11)
+
+    fig.suptitle(
+        'Dataset 2: Spatial Coverage\n'
+        'Left: Weather station grid  '
+        'Right: SMAP satellite grid',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR / 'DS2_03_spatial_maps.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_03_spatial_maps.png")
+
+
+    # DS2-FIG04: SMAP layer correlations [3]
+    smap_layer_cols = [
+        'Soil_Temp_L1', 'Soil_Temp_L2',
+        'Soil_Temp_L3', 'Soil_Temp_L4',
+    ]
+    avail_layers = [
+        c for c in smap_layer_cols
+        if c in df2.columns]
+
+    if len(avail_layers) > 1:
+        smap_corr = (
+            df2[avail_layers]
+            .dropna()
+            .sample(
+                min(50000, len(df2)),
+                random_state=SEED)
+            .corr()
+            .round(4))
+
+        fig, ax = plt.subplots(
+            figsize=(8, 6))
+        sns.heatmap(
+            smap_corr,
+            annot      = True,
+            fmt        = '.4f',
+            cmap       = 'RdYlGn',
+            vmin       = 0.9,
+            vmax       = 1.0,
+            linewidths = 0.5,
+            linecolor  = 'white',
+            annot_kws  = {
+                'size'  : 12,
+                'weight': 'bold'},
+            cbar_kws   = {
+                'label' : 'Pearson r',
+                'shrink': 0.8},
+            ax=ax)
+        ax.set_title(
+            'Dataset 2: SMAP Layer Correlations\n'
+            'High inter-layer correlation '
+            'confirms redundancy of L2, L3, L4',
+            fontweight='bold', fontsize=12)
+        plt.tight_layout()
+        plt.savefig(
+            FIG_DIR /
+            'DS2_04_smap_layer_corr.png',
+            dpi=150, bbox_inches='tight')
+        plt.show()
+        print("Saved: DS2_04_smap_layer_corr.png")
+        print(smap_corr.to_string())
+
+
+    # DS2-FIG05: Seasonal patterns by site
+    df2['month'] = df2['time_utc'].dt.month
+
+    tgts_seasonal = [
+        ('soil_temperature_0_to_7cm',
+         'Soil Temperature (deg C)'),
+        ('SM_Surface',
+         'SMAP Surface Moisture (m3/m3)'),
+        ('Soil_Temp_L1',
+         'SMAP Soil Temp L1 (K)'),
+    ]
+    tgts_seasonal = [
+        (t, l) for t, l in tgts_seasonal
+        if t in df2.columns]
+
+    fig, axes = plt.subplots(
+        1, len(tgts_seasonal),
+        figsize=(8 * len(tgts_seasonal), 6))
+    if len(tgts_seasonal) == 1:
+        axes = [axes]
+
+    for ax, (tgt, lbl) in zip(
+            axes, tgts_seasonal):
+        for site, grp in df2.groupby('Site'):
+            monthly = (
+                grp.groupby('month')[tgt]
+                .mean())
+            ax.plot(
+                monthly.index,
+                monthly.values,
+                marker='o', lw=2,
+                label=site,
+                color=SITE_COLORS.get(
+                    site, 'grey'))
+
+        if ('temp' in tgt.lower() or
+                'Temp' in tgt):
+            ref = 273.15 if 'K' in lbl else 0
+            ax.axhline(
+                ref, color='grey',
+                ls='--', lw=1, alpha=0.7,
+                label='Freezing point')
+
+        ax.set_xticks(range(1, 13))
+        ax.set_xticklabels(
+            ['J', 'F', 'M', 'A', 'M', 'J',
+             'J', 'A', 'S', 'O', 'N', 'D'],
+            fontsize=9)
+        ax.set_xlabel('Month', fontsize=10)
+        ax.set_ylabel(lbl, fontsize=10)
+        ax.set_title(
+            f'Monthly Mean by Site\n{lbl}',
+            fontweight='bold', fontsize=10)
+        ax.legend(fontsize=8)
+
+    fig.suptitle(
+        'Dataset 2: Seasonal Patterns '
+        'by Site\n2022-2025',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_05_seasonal_by_site.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_05_seasonal_by_site.png")
+
+
+    # DS2-FIG06: Spatial variation at
+    # single timestep (senior concern) [3]
+    sample_time = (
+        df2['time_utc'].dropna()
+        .sort_values()
+        .iloc[len(df2) // 2])
+    same_time = df2[
+        df2['time_utc'] == sample_time]
+
+    spat_vars = [
+        'soil_temperature_0_to_7cm',
+        'Soil_Temp_L1',
+        'SM_Surface',
+        'elevation_m',
+    ]
+    spat_vars = [
+        c for c in spat_vars
+        if c in same_time.columns]
+
+    fig, axes = plt.subplots(
+        1, len(spat_vars),
+        figsize=(6 * len(spat_vars), 6))
+    if len(spat_vars) == 1:
+        axes = [axes]
+
+    for ax, col in zip(axes, spat_vars):
+        vals = same_time[col].dropna()
+        std_val = vals.std()
+        ax.hist(
+            vals, bins=30,
+            color='steelblue',
+            alpha=0.8,
+            edgecolor='white')
+        ax.set_title(
+            f'{col}\nstd={std_val:.4f}',
+            fontweight='bold', fontsize=9)
+        ax.set_xlabel('Value', fontsize=9)
+        ax.set_ylabel('Count', fontsize=9)
+
+    fig.suptitle(
+        'Dataset 2: Spatial Variation '
+        'at Single Timestep\n'
+        f'Timestamp: {sample_time}\n'
+        'Wide distribution = meaningful '
+        'spatial variation',
+        fontsize=12, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_06_spatial_variation.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_06_spatial_variation.png")
+
+
+    # DS2-FIG07: Correlation matrix
+    fig, ax = plt.subplots(figsize=(16, 13))
+    corr_cols2 = num_cols2[:16]
+    corr_mat2  = (
+        df2[corr_cols2]
+        .dropna()
+        .sample(
+            min(30000, len(df2)),
+            random_state=SEED)
+        .corr()
+        .round(3))
+    mask = np.triu(
+        np.ones_like(corr_mat2, dtype=bool))
+    sns.heatmap(
+        corr_mat2, mask=mask,
+        annot=True, fmt='.2f',
+        cmap='RdBu_r', center=0,
+        vmin=-1, vmax=1,
+        linewidths=0.3,
+        linecolor='white',
+        annot_kws={'size': 7},
+        cbar_kws={
+            'label' : 'Pearson r',
+            'shrink': 0.8},
+        ax=ax)
+    ax.set_title(
+        'Dataset 2: Full Feature '
+        'Correlation Matrix',
+        fontweight='bold', fontsize=12)
+    ax.tick_params(
+        axis='x', rotation=45, labelsize=8)
+    ax.tick_params(
+        axis='y', rotation=0,  labelsize=8)
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR / 'DS2_07_correlation.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_07_correlation.png")
+
+
+
+
+# ============================================================
+# SECTION 10: COMPARATIVE FIGURES — BOTH DATASETS
+# Side-by-side comparisons where columns overlap
+# ============================================================
+
+def find_common_variables(df1, df2):
+    """
+    Find columns that exist in both datasets
+    by name or by semantic meaning.
+    """
+    cols1 = set(df1.columns.str.lower())
+    cols2 = set(df2.columns.str.lower())
+
+    exact_match = cols1.intersection(cols2)
+    print(f"\nExact column name matches: "
+          f"{len(exact_match)}")
+    for c in sorted(exact_match):
+        print(f"  {c}")
+
+    return sorted(exact_match)
+
+
+if df1 is not None and df2 is not None:
+    common_cols = find_common_variables(
+        df1, df2)
+
+    # COMP-FIG01: Temporal coverage comparison
+    fig, ax = plt.subplots(figsize=(16, 5))
+
+    datasets = []
+    labels   = []
+
+    if df1 is not None and time_col1:
+        t1 = pd.to_datetime(
+            df1[time_col1],
+            errors='coerce').dropna()
+        datasets.append(t1)
+        labels.append('Dataset 1\n2000-2025')
+
+    if df2 is not None:
+        t2 = df2['time_utc'].dropna()
+        datasets.append(t2)
+        labels.append('Dataset 2\n2022-2025')
+
+    colors_comp = ['steelblue', '#d62728']
+    for i, (t, lbl) in enumerate(
+            zip(datasets, labels)):
+        t_year = t.dt.year
+        counts = (t_year.value_counts()
+                  .sort_index())
+        ax.bar(
+            counts.index + i * 0.4,
+            counts.values,
+            width     = 0.4,
+            label     = lbl,
+            color     = colors_comp[i],
+            alpha     = 0.75,
+            edgecolor = 'black',
+            linewidth = 0.4)
+
+    ax.set_xlabel('Year', fontsize=11)
+    ax.set_ylabel(
+        'Number of Records', fontsize=11)
+    ax.set_title(
+        'Temporal Coverage Comparison\n'
+        'Dataset 1 vs Dataset 2',
+        fontweight='bold', fontsize=12)
+    ax.legend(fontsize=10)
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'COMP_01_temporal_coverage.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: COMP_01_temporal_coverage.png")
+
+
+    # COMP-FIG02: Spatial extent comparison
+    fig, axes = plt.subplots(
+        1, 2, figsize=(18, 7))
+
+    lat_col1 = next(
+        (c for c in df1.columns
+         if 'lat' in c.lower()), None)
+    lon_col1 = next(
+        (c for c in df1.columns
+         if 'lon' in c.lower()), None)
+
+    if lat_col1 and lon_col1:
+        locs1_plot = (
+            df1[[lat_col1, lon_col1]]
+            .dropna()
+            .drop_duplicates()
+            .sample(
+                min(5000,
+                    len(df1
+                        [[lat_col1,
+                          lon_col1]]
+                        .dropna()
+                        .drop_duplicates())),
+                random_state=SEED))
+        axes[0].scatter(
+            locs1_plot[lon_col1],
+            locs1_plot[lat_col1],
+            color     = 'steelblue',
+            s         = 15,
+            alpha     = 0.5,
+            edgecolors= 'none')
+        axes[0].set_title(
+            'Dataset 1: Spatial Extent\n'
+            'Alaska 2000-2025',
+            fontweight='bold', fontsize=11)
+    else:
+        axes[0].text(
+            0.5, 0.5,
+            'No lat/lon columns found\n'
+            'in Dataset 1',
+            ha='center', va='center',
+            transform=axes[0].transAxes,
+            fontsize=11)
+        axes[0].set_title(
+            'Dataset 1: Spatial Extent\n'
+            'Not Available',
+            fontweight='bold', fontsize=11)
+
+    if 'Latitude' in df2.columns and \
+            'Longitude' in df2.columns:
+        locs2_plot = (
+            df2[['Latitude', 'Longitude']]
+            .dropna()
+            .drop_duplicates())
+        axes[1].scatter(
+            locs2_plot['Longitude'],
+            locs2_plot['Latitude'],
+            color     = '#d62728',
+            s         = 20,
+            alpha     = 0.7,
+            edgecolors= 'black',
+            linewidth = 0.2)
+        axes[1].set_title(
+            'Dataset 2: Spatial Extent\n'
+            f'{len(locs2_plot)} unique locations',
+            fontweight='bold', fontsize=11)
+
+    for ax in axes:
+        ax.set_xlabel('Longitude', fontsize=10)
+        ax.set_ylabel('Latitude',  fontsize=10)
+
+    fig.suptitle(
+        'Spatial Extent Comparison\n'
+        'Dataset 1 vs Dataset 2',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'COMP_02_spatial_extent.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: COMP_02_spatial_extent.png")
+
+
+
+
+# ============================================================
+# SECTION 11: SPATIAL ADEQUACY ASSESSMENT
+# Directly addresses the senior concern [3]
+# ============================================================
+
+def assess_spatial_adequacy(df, name):
+    """
+    Comprehensive spatial adequacy assessment.
+    Addresses whether a dataset has meaningful
+    spatial variation or is effectively single-point.
+
+    Tests performed:
+    1. Number of unique spatial locations
+    2. Spatial variation of target variables
+       at the same timestep
+    3. Correlation between distance and
+       variable difference
+    4. Intra-location vs inter-location variance
+    5. Effective number of independent locations
+    """
+    print(f"\n{'='*65}")
+    print(f"  SPATIAL ADEQUACY ASSESSMENT: {name}")
+    print(f"{'='*65}")
+
+    lat_col = next(
+        (c for c in df.columns
+         if 'lat' in c.lower()), None)
+    lon_col = next(
+        (c for c in df.columns
+         if 'lon' in c.lower()), None)
+
+    if lat_col is None or lon_col is None:
+        print("  No latitude/longitude columns.")
+        print("  Cannot assess spatial adequacy.")
+        return
+
+    # Test 1: Unique locations
+    unique_locs = (
+        df[[lat_col, lon_col]]
+        .dropna()
+        .drop_duplicates())
+    n_locs = len(unique_locs)
+    print(f"\n  Test 1: Unique locations")
+    print(f"    Count    : {n_locs:,}")
+    print(f"    Verdict  : "
+          + ("ADEQUATE (>10 unique)"
+             if n_locs > 10
+             else "INSUFFICIENT (<= 10)"))
+
+    # Test 2: Spatial variation at same time
+    print(f"\n  Test 2: Spatial variation "
+          f"at same timestep")
+
+    time_col = next(
+        (c for c in df.columns
+         if 'time' in c.lower()), None)
+
+    if time_col is not None:
+        sample_t = (
+            df[time_col].dropna()
+            .sort_values()
+            .iloc[len(df) // 2])
+        same_t = df[df[time_col] == sample_t]
+    # Test 2 continued: Spatial variation
+    print(f"\n  Test 2: Spatial variation "
+          f"at same timestep")
+    print(f"    Sample time: {sample_t}")
+    print(f"    Records    : {len(same_t)}")
+
+    temp_cols = [
+        c for c in df.columns
+        if 'temp' in c.lower()
+        or 'soil' in c.lower()
+        or 'sm_' in c.lower()
+    ]
+    temp_cols = temp_cols[:6]
+
+    for col in temp_cols:
+        if col not in same_t.columns:
+            continue
+        vals = same_t[col].dropna()
+        if len(vals) < 2:
+            continue
+        std_val  = vals.std()
+        mean_val = vals.mean()
+        cv = (abs(std_val / mean_val) * 100
+              if mean_val != 0 else 0)
+        verdict = (
+            "MEANINGFUL SPATIAL VARIATION"
+            if std_val > 0.01
+            else "NEGLIGIBLE VARIATION")
+        print(f"    {col:<35}: "
+              f"std={std_val:.4f} "
+              f"cv={cv:.2f}% "
+              f"-- {verdict}")
+
+    # Test 3: Variance decomposition
+    # Inter-location vs intra-location
+    print(f"\n  Test 3: Variance decomposition")
+    print(f"    (inter-location vs "
+          f"intra-location)")
+
+    if (lat_col in df.columns and
+            time_col is not None):
+        for col in temp_cols[:3]:
+            if col not in df.columns:
+                continue
+            try:
+                # Total variance
+                total_var = df[col].var()
+
+                # Mean per location
+                loc_means = (
+                    df.groupby(
+                        [lat_col, lon_col])[col]
+                    .mean())
+                inter_var = loc_means.var()
+
+                # Intra-location variance
+                intra_var = (
+                    df.groupby(
+                        [lat_col, lon_col])[col]
+                    .var().mean())
+
+                pct_inter = (
+                    100 * inter_var /
+                    (total_var + 1e-10))
+                pct_intra = (
+                    100 * intra_var /
+                    (total_var + 1e-10))
+
+                print(
+                    f"    {col:<30}: "
+                    f"inter={pct_inter:.1f}% "
+                    f"intra={pct_intra:.1f}%")
+                if pct_inter > 10:
+                    print(
+                        f"      Meaningful spatial "
+                        f"structure detected")
+                else:
+                    print(
+                        f"      Low spatial "
+                        f"differentiation")
+            except Exception as e:
+                print(
+                    f"    {col}: "
+                    f"could not compute ({e})")
+
+    # Test 4: Effective spatial resolution
+    print(f"\n  Test 4: Effective spatial "
+          f"resolution")
+    try:
+        unique_locs_test = (
+            df[[lat_col, lon_col]]
+            .dropna()
+            .drop_duplicates())
+        lat_range = (
+            unique_locs_test[lat_col].max()
+            - unique_locs_test[lat_col].min())
+        lon_range = (
+            unique_locs_test[lon_col].max()
+            - unique_locs_test[lon_col].min())
+        area_deg2 = lat_range * lon_range
+        n_locs    = len(unique_locs_test)
+        density   = (n_locs / area_deg2
+                     if area_deg2 > 0 else 0)
+
+        print(f"    Coverage area  : "
+              f"{lat_range:.3f} x "
+              f"{lon_range:.3f} deg")
+        print(f"    Location count : {n_locs}")
+        print(f"    Density        : "
+              f"{density:.1f} locs/deg2")
+    except Exception as e:
+        print(f"    Could not compute: {e}")
+
+    # Summary verdict
+    print(f"\n  SPATIAL ADEQUACY VERDICT:")
+    if n_locs >= 50:
+        print(f"    ADEQUATE: {n_locs} unique "
+              f"locations provide sufficient "
+              f"spatial coverage for field "
+              f"prediction")
+    elif n_locs >= 10:
+        print(f"    MARGINAL: {n_locs} unique "
+              f"locations provide limited "
+              f"spatial coverage")
+    else:
+        print(f"    INSUFFICIENT: {n_locs} "
+              f"unique locations -- effectively "
+              f"a single-point dataset")
+
+
+if df1 is not None and 'groups1' in dir():
+    # Detect time column for df1
+    time_col1 = next(
+        (c for c in df1.columns
+         if 'time' in c.lower()
+         or 'date' in c.lower()), None)
+    assess_spatial_adequacy(
+        df1,
+        "Dataset 1: Alaska 2000-2025")
+
+if df2 is not None:
+    assess_spatial_adequacy(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025") 
+
+
+
+
+# ============================================================
+# SECTION 12: SENIOR CONCERN INVESTIGATION
+# Directly investigates whether Dataset 2 is
+# truly spatially diverse or effectively
+# a replicated single-point dataset [1][3]
+# ============================================================
+
+def investigate_spatial_replication(df, name):
+    """
+    Tests whether observations across locations
+    at the same timestep are identical or near-
+    identical, which would indicate the dataset
+    is not truly spatial.
+
+    Four specific tests:
+    1. Are SMAP values identical across nodes?
+    2. Do weather values vary across lat/lon?
+    3. Does topography vary across locations?
+    4. Are site labels meaningful spatial groups?
+    """
+    print(f"\n{'='*65}")
+    print(f"  SPATIAL REPLICATION INVESTIGATION")
+    print(f"  {name}")
+    print(f"{'='*65}")
+
+    # Test A: SMAP node uniqueness
+    if ('smap_node_x' in df.columns and
+            'smap_node_y' in df.columns):
+        unique_nodes = (
+            df[['smap_node_x', 'smap_node_y']]
+            .drop_duplicates())
+        print(f"\n  A. SMAP Node Uniqueness:")
+        print(f"     Unique nodes: "
+              f"{len(unique_nodes)}")
+        print(f"     Node X range: "
+              f"{int(df['smap_node_x'].min())} "
+              f"to "
+              f"{int(df['smap_node_x'].max())}")
+        print(f"     Node Y range: "
+              f"{int(df['smap_node_y'].min())} "
+              f"to "
+              f"{int(df['smap_node_y'].max())}")
+
+        # Do SMAP temperature values differ
+        # between nodes at same time?
+        if ('Soil_Temp_L1' in df.columns and
+                'time_utc' in df.columns):
+            sample_t = (
+                df['time_utc'].dropna()
+                .sort_values()
+                .iloc[len(df) // 2])
+            at_t = df[
+                df['time_utc'] == sample_t]
+
+            if len(at_t) > 1:
+                l1_vals = (
+                    at_t['Soil_Temp_L1']
+                    .dropna())
+                print(f"\n     Soil_Temp_L1 "
+                      f"at {sample_t}:")
+                print(f"     Records : "
+                      f"{len(l1_vals)}")
+                print(f"     Min     : "
+                      f"{l1_vals.min():.4f}")
+                print(f"     Max     : "
+                      f"{l1_vals.max():.4f}")
+                print(f"     Std     : "
+                      f"{l1_vals.std():.4f}")
+                if l1_vals.std() > 0.01:
+                    print(f"     RESULT  : "
+                          f"VALUES DIFFER ACROSS "
+                          f"NODES -- dataset is "
+                          f"spatially diverse")
+                else:
+                    print(f"     RESULT  : "
+                          f"VALUES ARE IDENTICAL "
+                          f"-- dataset may be "
+                          f"replicated single-point")
+
+    # Test B: Weather variable variation
+    print(f"\n  B. Weather Variable Variation "
+          f"Across Locations:")
+    weather_cols = [
+        'temperature_2m',
+        'precipitation',
+        'snow_depth_weather',
+    ]
+    for col in weather_cols:
+        if col not in df.columns:
+            continue
+        if 'time_utc' not in df.columns:
+            continue
+        sample_t = (
+            df['time_utc'].dropna()
+            .sort_values()
+            .iloc[len(df) // 2])
+        at_t = df[df['time_utc'] == sample_t]
+        vals = at_t[col].dropna()
+        if len(vals) < 2:
+            continue
+        std_val = vals.std()
+        verdict = (
+            "VARIES" if std_val > 0.001
+            else "CONSTANT")
+        print(f"     {col:<30}: "
+              f"std={std_val:.4f} "
+              f"-- {verdict}")
+
+    # Test C: Topography variation
+    print(f"\n  C. Topography Variation "
+          f"Across Locations:")
+    topo_cols = [
+        'elevation_m',
+        'elev_roughness_m',
+        'slope_deg',
+    ]
+    for col in topo_cols:
+        if col not in df.columns:
+            continue
+        unique_vals = df[col].dropna().nunique()
+        std_val     = df[col].dropna().std()
+        verdict = (
+            "VARIES SPATIALLY"
+            if unique_vals > 10
+            else "LIMITED VARIATION")
+        print(f"     {col:<30}: "
+              f"{unique_vals} unique values "
+              f"std={std_val:.2f} "
+              f"-- {verdict}")
+
+    # Test D: Site label analysis
+    print(f"\n  D. Site Label Analysis:")
+    if 'Site' in df.columns:
+        sites = df['Site'].unique()
+        print(f"     Unique sites: {len(sites)}")
+        print(f"     Site names  : {list(sites)}")
+
+        # Do sites have different coordinates?
+        if ('Latitude' in df.columns and
+                'Longitude' in df.columns):
+            site_coords = (
+                df.groupby('Site')[
+                    ['Latitude', 'Longitude']]
+                .agg(['min', 'max', 'nunique']))
+            print(f"\n     Site coordinate ranges:")
+            for site in sites:
+                site_data = df[
+                    df['Site'] == site]
+                lat_range = (
+                    site_data['Latitude'].max()
+                    - site_data['Latitude'].min())
+                lon_range = (
+                    site_data['Longitude'].max()
+                    - site_data['Longitude'].min())
+                n_unique  = len(
+                    site_data[
+                        ['Latitude','Longitude']]
+                    .drop_duplicates())
+                print(f"     {site:<20}: "
+                      f"lat_span={lat_range:.3f} "
+                      f"lon_span={lon_range:.3f} "
+                      f"unique_locs={n_unique}")
+
+    # Overall assessment
+    print(f"\n  OVERALL SPATIAL ASSESSMENT:")
+    print(f"  Based on the tests above, "
+          f"the spatial structure of {name}")
+    print(f"  should be interpreted as follows:")
+    print(f"  - If SMAP values differ across "
+          f"nodes: dataset is truly spatial")
+    print(f"  - If topography varies: meaningful "
+          f"spatial heterogeneity exists")
+    print(f"  - If weather is constant at a "
+          f"given time: weather is gridded")
+    print(f"    product, not truly spatial")
+    print(f"  - Sites represent ecosystem types,")
+    print(f"    not geographic regions")
+
+
+if df2 is not None:
+    investigate_spatial_replication(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025")
+
+
+
+# ============================================================
+# SECTION 13: ANNUAL AND INTER-ANNUAL ANALYSIS
+# Multi-year trends in both datasets
+# ============================================================
+
+def annual_analysis(df, name, time_col,
+                     target_cols):
+    """
+    Annual and inter-annual trend analysis.
+    Reports year-by-year statistics and
+    identifies multi-year trends.
+    """
+    print(f"\n{'='*65}")
+    print(f"  ANNUAL ANALYSIS: {name}")
+    print(f"{'='*65}")
+
+    if time_col not in df.columns:
+        print(f"  Time column not found: {time_col}")
+        return
+
+    df_temp = df.copy()
+    df_temp['year'] = pd.to_datetime(
+        df_temp[time_col],
+        errors='coerce').dt.year
+
+    years = sorted(
+        df_temp['year'].dropna()
+        .astype(int).unique())
+    print(f"\n  Years present: {years}")
+
+    for col in target_cols:
+        if col not in df_temp.columns:
+            continue
+        print(f"\n  {col}:")
+        print(f"  {'Year':<8} {'Mean':>10} "
+              f"{'Std':>10} {'Min':>10} "
+              f"{'Max':>10} {'N':>10}")
+        print("  " + "-" * 58)
+
+        annual_stats = (
+            df_temp.groupby('year')[col]
+            .agg(['mean', 'std', 'min',
+                  'max', 'count'])
+            .reset_index())
+
+        for _, row in annual_stats.iterrows():
+            print(
+                f"  {int(row['year']):<8} "
+                f"{row['mean']:>10.3f} "
+                f"{row['std']:>10.3f} "
+                f"{row['min']:>10.3f} "
+                f"{row['max']:>10.3f} "
+                f"{int(row['count']):>10,}")
+
+
+if df1 is not None and time_col1:
+    temp_cols1 = [
+        c for c in df1.columns
+        if ('temp' in c.lower() or
+            'soil' in c.lower())][:3]
+    annual_analysis(
+        df1,
+        "Dataset 1: Alaska 2000-2025",
+        time_col1,
+        temp_cols1)
+
+if df2 is not None:
+    annual_analysis(
+        df2,
+        "Dataset 2: Fully Sequenced 2022-2025",
+        'time_utc',
+        ['soil_temperature_0_to_7cm',
+         'Soil_Temp_L1',
+         'SM_Surface'])
+
+
+
+# ============================================================
+# SECTION 14: ANNUAL TREND FIGURES — BOTH DATASETS
+# ============================================================
+
+if df2 is not None:
+
+    df2['year']  = df2['time_utc'].dt.year
+    df2['month'] = df2['time_utc'].dt.month
+
+    # ANNUAL-FIG01: Annual mean temperature
+    fig, axes = plt.subplots(
+        1, 2, figsize=(18, 7))
+
+    temp_targets = [
+        'soil_temperature_0_to_7cm',
+        'Soil_Temp_L1',
+    ]
+    temp_targets = [
+        t for t in temp_targets
+        if t in df2.columns]
+
+    for ax, tgt in zip(axes, temp_targets):
+        annual = (
+            df2.groupby(['year', 'Site'])[tgt]
+            .mean()
+            .reset_index())
+        for site in df2['Site'].unique():
+            site_data = annual[
+                annual['Site'] == site]
+            ax.plot(
+                site_data['year'],
+                site_data[tgt],
+                marker='o', lw=2,
+                label=site,
+                color=SITE_COLORS.get(
+                    site, 'grey'))
+        ax.set_xlabel('Year', fontsize=10)
+        ax.set_ylabel(tgt, fontsize=9)
+        ax.set_title(
+            f'Annual Mean by Site\n{tgt}',
+            fontweight='bold', fontsize=10)
+        ax.legend(fontsize=8)
+
+    fig.suptitle(
+        'Dataset 2: Annual Mean Trends '
+        'by Site\n2022-2025',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_08_annual_trends.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_08_annual_trends.png")
+
+
+    # ANNUAL-FIG02: Monthly heatmap by year
+    fig, axes = plt.subplots(
+        1, 2, figsize=(18, 7))
+
+    for ax, tgt in zip(
+            axes,
+            ['soil_temperature_0_to_7cm',
+             'SM_Surface']):
+        if tgt not in df2.columns:
+            continue
+        pivot = (
+            df2.groupby(['year', 'month'])[tgt]
+            .mean()
+            .unstack(level='month'))
+        pivot.columns = [
+            'Jan','Feb','Mar','Apr',
+            'May','Jun','Jul','Aug',
+            'Sep','Oct','Nov','Dec']
+        sns.heatmap(
+            pivot.round(2),
+            ax         = ax,
+            cmap       = 'RdBu_r',
+            annot      = True,
+            fmt        = '.2f',
+            linewidths = 0.3,
+            cbar_kws   = {
+                'label': tgt,
+                'shrink': 0.8},
+            annot_kws  = {'size': 8})
+        ax.set_title(
+            f'Monthly Mean Heatmap\n{tgt}',
+            fontweight='bold', fontsize=10)
+        ax.set_xlabel('Month', fontsize=10)
+        ax.set_ylabel('Year',  fontsize=10)
+
+    fig.suptitle(
+        'Dataset 2: Year x Month Heatmap\n'
+        '2022-2025',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_09_monthly_heatmap.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_09_monthly_heatmap.png")
+
+
+
+
+# ============================================================
+# SECTION 15: FREEZE-THAW ANALYSIS
+# Critical for Alaska permafrost research [1]
+# ============================================================
+
+def freeze_thaw_analysis(df, name,
+                          temp_col,
+                          time_col):
+    """
+    Freeze-thaw cycle analysis.
+    Critical for Alaska permafrost research.
+    Reports frozen days per year, transition
+    frequency, and seasonal freeze onset.
+    """
+    print(f"\n{'='*65}")
+    print(f"  FREEZE-THAW ANALYSIS: {name}")
+    print(f"{'='*65}")
+
+    if (temp_col not in df.columns or
+            time_col not in df.columns):
+        print(f"  Required columns not found.")
+        print(f"  temp_col: {temp_col}")
+        print(f"  time_col: {time_col}")
+        return None
+
+    df_ft = df[[time_col, temp_col]].copy()
+    df_ft[time_col] = pd.to_datetime(
+        df_ft[time_col], errors='coerce')
+    df_ft = df_ft.dropna()
+    df_ft['year']    = df_ft[time_col].dt.year
+    df_ft['month']   = df_ft[time_col].dt.month
+    df_ft['is_frozen']= (
+        df_ft[temp_col] < 0).astype(int)
+
+    # Frozen fraction per year
+    print(f"\n  Frozen fraction per year:")
+    print(f"  {'Year':<8} {'Frozen%':>10} "
+          f"{'Mean Temp':>12} "
+          f"{'Min Temp':>10} "
+          f"{'Max Temp':>10}")
+    print("  " + "-" * 52)
+
+    annual = df_ft.groupby('year').agg(
+        frozen_pct  = (
+            'is_frozen', 'mean'),
+        mean_temp   = (temp_col, 'mean'),
+        min_temp    = (temp_col, 'min'),
+        max_temp    = (temp_col, 'max'),
+        n_records   = (temp_col, 'count'),
+    ).reset_index()
+
+    for _, row in annual.iterrows():
+        print(
+            f"  {int(row['year']):<8} "
+            f"{row['frozen_pct']*100:>9.1f}% "
+            f"{row['mean_temp']:>12.3f} "
+            f"{row['min_temp']:>10.3f} "
+            f"{row['max_temp']:>10.3f}")
+
+    # Freeze onset by month
+    print(f"\n  Monthly frozen fraction "
+          f"(all years combined):")
+    print(f"  {'Month':<8} {'Frozen%':>10} "
+          f"{'Mean Temp':>12}")
+    print("  " + "-" * 32)
+
+    monthly = df_ft.groupby('month').agg(
+        frozen_pct = ('is_frozen', 'mean'),
+        mean_temp  = (temp_col, 'mean'),
+    ).reset_index()
+
+    month_names = {
+        1:'Jan', 2:'Feb', 3:'Mar',
+        4:'Apr', 5:'May', 6:'Jun',
+        7:'Jul', 8:'Aug', 9:'Sep',
+        10:'Oct', 11:'Nov', 12:'Dec',
+    }
+    for _, row in monthly.iterrows():
+        mname = month_names.get(
+            int(row['month']), str(row['month']))
+        print(
+            f"  {mname:<8} "
+            f"{row['frozen_pct']*100:>9.1f}% "
+            f"{row['mean_temp']:>12.3f}")
+
+    # Transition detection
+    # Count freeze/thaw events per year
+    print(f"\n  Freeze-thaw transition count "
+          f"per year:")
+    df_ft_sorted = df_ft.sort_values(time_col)
+    df_ft_sorted['state_change'] = (
+        df_ft_sorted['is_frozen'].diff().abs())
+
+    transitions = (
+        df_ft_sorted
+        .groupby('year')['state_change']
+        .sum()
+        .reset_index())
+
+    for _, row in transitions.iterrows():
+        print(f"  {int(row['year']):<8}: "
+              f"{int(row['state_change']):>6} "
+              f"transitions")
+
+    return annual
+
+
+if df2 is not None:
+    if 'Site' in df2.columns:
+        print("\nFreeze-thaw analysis by site:")
+        for site in df2['Site'].unique():
+            site_data = df2[
+                df2['Site'] == site].copy()
+            freeze_thaw_analysis(
+                site_data,
+                f"Dataset 2 - {site}",
+                'soil_temperature_0_to_7cm',
+                'time_utc')
+    else:
+        freeze_thaw_analysis(
+            df2,
+            "Dataset 2: Fully Sequenced",
+            'soil_temperature_0_to_7cm',
+            'time_utc')
+
+
+
+# ============================================================
+# SECTION 16: FREEZE-THAW FIGURES
+# ============================================================
+
+if df2 is not None:
+
+    df2['year']     = df2['time_utc'].dt.year
+    df2['month']    = df2['time_utc'].dt.month
+    df2['is_frozen']= (
+        df2['soil_temperature_0_to_7cm'] < 0
+    ).astype(int)
+
+    # FT-FIG01: Annual frozen fraction by site
+    fig, axes = plt.subplots(
+        1, 2, figsize=(18, 7))
+
+    # Panel 1: Annual frozen fraction
+    ax = axes[0]
+    for site in df2['Site'].unique():
+        site_data = df2[df2['Site'] == site]
+        annual_frozen = (
+            site_data
+            .groupby('year')['is_frozen']
+            .mean() * 100)
+        ax.plot(
+            annual_frozen.index,
+            annual_frozen.values,
+            marker='o', lw=2,
+            label=site,
+            color=SITE_COLORS.get(
+                site, 'grey'))
+
+    ax.set_xlabel('Year', fontsize=10)
+    ax.set_ylabel(
+        'Percent of Time Frozen (%)',
+        fontsize=10)
+    ax.set_title(
+        'Annual Frozen Fraction by Site\n'
+        'Soil Temperature below 0 deg C',
+        fontweight='bold', fontsize=11)
+    ax.legend(fontsize=9)
+
+    # Panel 2: Monthly frozen fraction
+    ax = axes[1]
+    month_names = [
+        'Jan','Feb','Mar','Apr',
+        'May','Jun','Jul','Aug',
+        'Sep','Oct','Nov','Dec']
+
+    for site in df2['Site'].unique():
+        site_data = df2[df2['Site'] == site]
+        monthly_frozen = (
+            site_data
+            .groupby('month')['is_frozen']
+            .mean() * 100)
+        ax.plot(
+            monthly_frozen.index,
+            monthly_frozen.values,
+            marker='o', lw=2,
+            label=site,
+            color=SITE_COLORS.get(
+                site, 'grey'))
+
+    ax.set_xticks(range(1, 13))
+    ax.set_xticklabels(month_names, fontsize=9)
+    ax.set_xlabel('Month', fontsize=10)
+    ax.set_ylabel(
+        'Percent of Time Frozen (%)',
+        fontsize=10)
+    ax.set_title(
+        'Monthly Frozen Fraction by Site',
+        fontweight='bold', fontsize=11)
+    ax.legend(fontsize=9)
+
+    fig.suptitle(
+        'Dataset 2: Freeze-Thaw Analysis '
+        'by Site\n2022-2025',
+        fontsize=13, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(
+        FIG_DIR /
+        'DS2_10_freeze_thaw.png',
+        dpi=150, bbox_inches='tight')
+    plt.show()
+    print("Saved: DS2_10_freeze_thaw.png")
+
+
+
+# ============================================================
+# SECTION 17: TOPOGRAPHY ANALYSIS
+# Dataset 2 contains elevation, roughness, slope
+# Relevant to spatial heterogeneity assessment [1][3]
+# ============================================================
+
+if df2 is not None:
+
+    topo_cols = [
+        'elevation_m',
+        'elev_roughness_m',
+        'slope_deg',
+    ]
+    topo_cols = [
+        c for c in topo_cols
+        if c in df2.columns]
+
+    if topo_cols:
+        print("\nTOPOGRAPHY ANALYSIS")
+        print("=" * 55)
+
+        # Summary per unique location
+        loc_topo = (
+            df2.groupby(
+                ['Latitude', 'Longitude'])
+            [topo_cols]
+            .first()
+            .reset_index())
+
+        print(f"  Unique locations: "
+              f"{len(loc_topo)}")
+        for col in topo_cols:
+            print(f"\n  {col}:")
+            print(f"    Min    : "
+                  f"{loc_topo[col].min():.3f}")
+            print(f"    Max    : "
+                  f"{loc_topo[col].max():.3f}")
+            print(f"    Mean   : "
+                  f"{loc_topo[col].mean():.3f}")
+            print(f"    Std    : "
+                  f"{loc_topo[col].std():.3f}")
+            print(f"    Unique : "
+                  f"{loc_topo[col].nunique()}")
+
+        # Topography figures
+        fig, axes = plt.subplots(
+            1, 3, figsize=(20, 7))
+
+        for ax, col in zip(axes, topo_cols):
+            sc = ax.scatter(
+                loc_topo['Longitude'],
+                loc_topo['Latitude'],
+                c          = loc_topo[col],
+                cmap       = 'terrain',
+                s          = 20,
+                alpha      = 0.8,
+                edgecolors = 'black',
+                linewidth  = 0.2)
+            plt.colorbar(sc, ax=ax,
+                         label=col,
+                         shrink=0.8)
+            ax.set_xlabel(
+                'Longitude', fontsize=9)
+            ax.set_ylabel(
+                'Latitude', fontsize=9)
+            ax.set_title(
+                f'Spatial Map: {col}',
+                fontweight='bold',
+                fontsize=10)
+
+        fig.suptitle(
+            'Dataset 2: Topography '
+            'Spatial Distribution\n'
+            'Each point = one unique '
+            'lat/lon location',
+            fontsize=13, fontweight='bold')
+        plt.tight_layout()
+        plt.savefig(
+            FIG_DIR /
+            'DS2_11_topography.png',
+            dpi=150, bbox_inches='tight')
+        plt.show()
+        print("Saved: DS2_11_topography.png")
+
+        # Correlation: topography vs targets
+        print(f"\n  Topography vs Target "
+              f"Correlations:")
+        print(f"  {'Feature':<25} "
+              f"{'SoilTemp':>10} "
+              f"{'Soil_TL1':>10} "
+              f"{'SM_Surf':>10}")
+        print("  " + "-" * 57)
+
+        target_check = [
+            'soil_temperature_0_to_7cm',
+            'Soil_Temp_L1',
+            'SM_Surface',
+        ]
+        for topo in topo_cols:
+            row_str = f"  {topo:<25}"
+            for tgt in target_check:
+                if tgt not in df2.columns:
+                    row_str += f"{'N/A':>10}"
+                    continue
+                sample = df2[
+                    [topo, tgt]].dropna()
+                if len(sample) < 10:
+                    row_str += f"{'N/A':>10}"
+                    continue
+                r, _ = stats.pearsonr(
+                    sample[topo],
+                    sample[tgt])
+                row_str += f"{r:>10.4f}"
+            print(row_str)
 
