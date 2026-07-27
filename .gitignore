@@ -1,0 +1,35 @@
+# Data (too large for GitHub)
+*.csv
+*.h5
+*.nc
+*.zarr
+preprocessed_v3/
+preprocessed_v4/
+
+# Model checkpoints (too large)
+models_v3/
+models_v4/
+*.pt
+*.pth
+
+# Figures (generated — commit selectively)
+figures_v3/
+figures_v4/
+*.png
+
+# Logs
+logs/
+*.log
+*.err
+*.out
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+*.egg-info/
+
+# Environment
+.env
+*.xdg-log/
