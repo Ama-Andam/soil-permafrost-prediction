@@ -1,4 +1,4 @@
-# Data (too large for GitHub)
+# Data — too large
 *.csv
 *.h5
 *.nc
@@ -6,13 +6,13 @@
 preprocessed_v3/
 preprocessed_v4/
 
-# Model checkpoints (too large)
+# Model checkpoints — too large
 models_v3/
 models_v4/
 *.pt
 *.pth
 
-# Figures (generated — commit selectively)
+# Figures — generated
 figures_v3/
 figures_v4/
 *.png
@@ -32,4 +32,3 @@ __pycache__/
 
 # Environment
 .env
-*.xdg-log/

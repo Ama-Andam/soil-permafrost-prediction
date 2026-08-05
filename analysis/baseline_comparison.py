@@ -118,8 +118,6 @@ for mname, model in BASELINES.items():
         X_tr_all.append(X_tr); y_tr_all.append(y_tr)
     if not X_tr_all: continue
     X_tr = np.vstack(X_tr_all); y_tr = np.concatenate(y_tr_all)
-    mask = ~np.isnan(X_tr).any(axis=1) & ~np.isnan(y_tr)
-    X_tr = X_tr[mask]; y_tr = y_tr[mask]
 
     # Time the training
     t0 = time.time()
