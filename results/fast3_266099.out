@@ -1,0 +1,86 @@
+2026-07-13 11:40:36,656	INFO usage_lib.py:467 -- Usage stats collection is enabled by default without user confirmation because this terminal is detected to be non-interactive. To disable this, add `--disable-usage-stats` to the command that starts the cluster, or run the following command: `ray disable-usage-stats` before starting the cluster. See https://docs.ray.io/en/master/cluster/usage-stats.html for more details.
+2026-07-13 11:40:36,656	INFO scripts.py:861 -- Local node IP: 10.228.136.53
+2026-07-13 11:40:39,009	SUCC scripts.py:897 -- --------------------
+2026-07-13 11:40:39,009	SUCC scripts.py:898 -- Ray runtime started.
+2026-07-13 11:40:39,009	SUCC scripts.py:899 -- --------------------
+2026-07-13 11:40:39,009	INFO scripts.py:901 -- Next steps
+2026-07-13 11:40:39,009	INFO scripts.py:904 -- To add another node to this Ray cluster, run
+2026-07-13 11:40:39,009	INFO scripts.py:907 --   ray start --address='10.228.136.53:6383'
+2026-07-13 11:40:39,009	INFO scripts.py:916 -- To connect to this Ray cluster:
+2026-07-13 11:40:39,009	INFO scripts.py:918 -- import ray
+2026-07-13 11:40:39,009	INFO scripts.py:919 -- ray.init()
+2026-07-13 11:40:39,009	INFO scripts.py:950 -- To terminate the Ray runtime, run
+2026-07-13 11:40:39,009	INFO scripts.py:951 --   ray stop
+2026-07-13 11:40:39,009	INFO scripts.py:954 -- To view the status of the cluster, use
+2026-07-13 11:40:39,009	INFO scripts.py:955 --   ray status
+Loading prepared dataset...
+Building sliding windows (n_lookback=24)...
+Train windows: 2,387,456  |  Test windows: 592,384
+Training models: ['LSTM', 'BiLSTM', 'GRU', 'BiGRU', 'TCN', 'PatchTST', 'Informer', 'TFT', 'S4D', 'Mamba']
+Ray cluster reports 1.0 GPU(s) -- scheduling each model task with num_gpus=0.25
+[36m(train_and_evaluate_remote pid=539386)[0m [LSTM] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539385)[0m [BiLSTM] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539387)[0m [GRU] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539389)[0m [BiGRU] starting on device=cuda
+
+Submitted 10 model training tasks. Waiting for results (each will print, and be saved to disk, as it finishes)...
+
+[36m(train_and_evaluate_remote pid=539387)[0m [GRU] epoch 1/3  loss=2.01201  (73.6s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [LSTM] epoch 1/3  loss=1.95497  (96.2s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539389)[0m [BiGRU] epoch 1/3  loss=1.87352  (118.3s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539385)[0m [BiLSTM] epoch 1/3  loss=1.83242  (145.8s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539387)[0m [GRU] epoch 2/3  loss=0.97337  (72.3s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [LSTM] epoch 2/3  loss=0.93833  (94.1s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539387)[0m [GRU] epoch 3/3  loss=0.72994  (72.4s, 4663 batches)
+>>> [1/10] GRU finished (status=ok, 227.5s)
+
+[36m(train_and_evaluate_remote pid=539387)[0m [GRU] DONE in 227.5s
+[36m(train_and_evaluate_remote pid=539387)[0m [TCN] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539389)[0m [BiGRU] epoch 2/3  loss=0.83902  (118.9s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [LSTM] epoch 3/3  loss=0.67937  (99.9s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539385)[0m [BiLSTM] epoch 2/3  loss=0.85519  (149.5s, 4663 batches)
+>>> [2/10] LSTM finished (status=ok, 301.8s)
+
+[36m(train_and_evaluate_remote pid=539386)[0m [LSTM] DONE in 301.8s
+[36m(train_and_evaluate_remote pid=539386)[0m [PatchTST] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539387)[0m [TCN] epoch 1/3  loss=1.43148  (134.3s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539389)[0m [BiGRU] epoch 3/3  loss=0.62554  (133.0s, 4663 batches)
+>>> [3/10] BiGRU finished (status=ok, 386.0s)
+
+[36m(train_and_evaluate_remote pid=539389)[0m [BiGRU] DONE in 386.0s
+[36m(train_and_evaluate_remote pid=539389)[0m [Informer] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539386)[0m [PatchTST] epoch 1/3  loss=1.84914  (109.2s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539385)[0m [BiLSTM] epoch 3/3  loss=0.59425  (162.0s, 4663 batches)
+>>> [4/10] BiLSTM finished (status=ok, 475.6s)
+
+[36m(train_and_evaluate_remote pid=539385)[0m [BiLSTM] DONE in 475.6s
+[36m(train_and_evaluate_remote pid=539385)[0m [TFT] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539387)[0m [TCN] epoch 2/3  loss=0.85167  (138.0s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [PatchTST] epoch 2/3  loss=1.05111  (108.8s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539385)[0m [TFT] epoch 1/3  loss=1.99251  (102.6s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539389)[0m [Informer] epoch 1/3  loss=1.80051  (212.4s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [PatchTST] epoch 3/3  loss=0.85329  (102.7s, 4663 batches)
+>>> [5/10] PatchTST finished (status=ok, 327.6s)
+
+[36m(train_and_evaluate_remote pid=539386)[0m [PatchTST] DONE in 327.6s
+[36m(train_and_evaluate_remote pid=539386)[0m [S4D] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539387)[0m [TCN] epoch 3/3  loss=0.70331  (134.7s, 4663 batches)
+>>> [6/10] TCN finished (status=ok, 414.4s)
+
+[36m(train_and_evaluate_remote pid=539387)[0m [TCN] DONE in 414.4s
+[36m(train_and_evaluate_remote pid=539387)[0m [Mamba] starting on device=cuda
+[36m(train_and_evaluate_remote pid=539385)[0m [TFT] epoch 2/3  loss=1.00792  (108.7s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [S4D] epoch 1/3  loss=2.27438  (175.8s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539385)[0m [TFT] epoch 3/3  loss=0.75975  (118.2s, 4663 batches)
+>>> [7/10] TFT finished (status=ok, 338.0s)
+
+[36m(train_and_evaluate_remote pid=539385)[0m [TFT] DONE in 338.0s
+[36m(train_and_evaluate_remote pid=539389)[0m [Informer] epoch 2/3  loss=0.96690  (227.4s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539386)[0m [S4D] epoch 2/3  loss=1.23860  (144.4s, 4663 batches)
+[36m(train_and_evaluate_remote pid=539389)[0m [Informer] epoch 3/3  loss=0.74075  (189.4s, 4663 batches)
+>>> [8/10] Informer finished (status=ok, 647.3s)
+
+[36m(train_and_evaluate_remote pid=539389)[0m [Informer] DONE in 647.3s
+[36m(train_and_evaluate_remote pid=539386)[0m [S4D] epoch 3/3  loss=1.04330  (125.1s, 4663 batches)
+>>> [9/10] S4D finished (status=ok, 454.0s)
+

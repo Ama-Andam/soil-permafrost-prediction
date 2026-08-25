@@ -1,0 +1,138 @@
+================================================================================
+BASIC INFO
+================================================================================
+time_utc                     datetime64[ns, UTC]
+Site                                      object
+Latitude                                 float64
+Longitude                                float64
+smap_node_x                                int64
+smap_node_y                                int64
+elevation_m                              float64
+elev_roughness_m                         float64
+slope_deg                                float64
+temperature_2m                           float64
+precipitation                            float64
+snow_depth_weather                       float64
+soil_temperature_0_to_7cm                float64
+soil_moisture_0_to_7cm                   float64
+Temp_K                                   float64
+SM_Surface                               float64
+SM_Rootzone                              float64
+Pressure                                 float64
+Greenness                                float64
+Snow_Depth_SMAP                          float64
+Soil_Temp_L1                             float64
+Soil_Temp_L2                             float64
+Soil_Temp_L3                             float64
+Soil_Temp_L4                             float64
+dtype: object
+
+Column-level null counts:
+time_utc                     0
+Site                         0
+Latitude                     0
+Longitude                    0
+smap_node_x                  0
+smap_node_y                  0
+elevation_m                  0
+elev_roughness_m             0
+slope_deg                    0
+temperature_2m               0
+precipitation                0
+snow_depth_weather           0
+soil_temperature_0_to_7cm    0
+soil_moisture_0_to_7cm       0
+Temp_K                       0
+SM_Surface                   0
+SM_Rootzone                  0
+Pressure                     0
+Greenness                    0
+Snow_Depth_SMAP              0
+Soil_Temp_L1                 0
+Soil_Temp_L2                 0
+Soil_Temp_L3                 0
+Soil_Temp_L4                 0
+dtype: int64
+
+================================================================================
+SITE SUMMARY
+================================================================================
+Number of unique sites: 4
+Sites: ['Bedrock', 'Transition', 'Upland', 'Wetland']
+
+      Site  n_rows  n_unique_coords  n_smap_nodes                  date_min                  date_max
+   Bedrock  748032               64            32 2022-01-01 00:00:00+00:00 2025-12-31 21:00:00+00:00
+Transition  748032               64             7 2022-01-01 00:00:00+00:00 2025-12-31 21:00:00+00:00
+    Upland  748032               64            24 2022-01-01 00:00:00+00:00 2025-12-31 21:00:00+00:00
+   Wetland  748032               64            24 2022-01-01 00:00:00+00:00 2025-12-31 21:00:00+00:00
+
+NOTE: these 'Site' labels contain multiple distinct lat/lon pairs (likely multiple station locations grouped under one name):
+      Site  n_unique_coords
+   Bedrock               64
+Transition               64
+    Upland               64
+   Wetland               64
+
+================================================================================
+TIME COVERAGE / GAP CHECK (expects hourly cadence)
+================================================================================
+Bedrock      | rows(ts)= 11688 | span=2022-01-01 00:00:00+00:00 -> 2025-12-31 21:00:00+00:00 | gaps>1h: 11687 | largest gap: 0 days 03:00:00
+Transition   | rows(ts)= 11688 | span=2022-01-01 00:00:00+00:00 -> 2025-12-31 21:00:00+00:00 | gaps>1h: 11687 | largest gap: 0 days 03:00:00
+Upland       | rows(ts)= 11688 | span=2022-01-01 00:00:00+00:00 -> 2025-12-31 21:00:00+00:00 | gaps>1h: 11687 | largest gap: 0 days 03:00:00
+Wetland      | rows(ts)= 11688 | span=2022-01-01 00:00:00+00:00 -> 2025-12-31 21:00:00+00:00 | gaps>1h: 11687 | largest gap: 0 days 03:00:00
+
+================================================================================
+TARGET-RELATED COLUMNS PRESENT
+================================================================================
+Columns that look like soil temp/moisture targets or SMAP soil layers:
+['soil_temperature_0_to_7cm', 'soil_moisture_0_to_7cm', 'SM_Surface', 'SM_Rootzone', 'Soil_Temp_L1', 'Soil_Temp_L2', 'Soil_Temp_L3', 'Soil_Temp_L4']
+
+Check manually: which of these are ground-truth targets vs SMAP input covariates.
+
+================================================================================
+ZERO-RUN CHECK ON MOISTURE COLUMNS
+(flags exact-zero streaks -- likely sensor fault / fill value, not physical)
+================================================================================
+
+================================================================================
+SMAP CADENCE CHECK
+(SMAP doesn't revisit hourly -- checks how values repeat, i.e. fill/interp method)
+================================================================================
+[Bedrock] Temp_K             | unique consecutive values: 728098 / 748032 rows ( 97.3% change rate)
+[Bedrock] SM_Surface         | unique consecutive values: 737539 / 748032 rows ( 98.6% change rate)
+[Bedrock] SM_Rootzone        | unique consecutive values: 736648 / 748032 rows ( 98.5% change rate)
+[Bedrock] Pressure           | unique consecutive values: 739214 / 748032 rows ( 98.8% change rate)
+[Bedrock] Greenness          | unique consecutive values: 676303 / 748032 rows ( 90.4% change rate)
+[Bedrock] Snow_Depth_SMAP    | unique consecutive values: 490828 / 748032 rows ( 65.6% change rate)
+[Bedrock] Soil_Temp_L1       | unique consecutive values: 729000 / 748032 rows ( 97.5% change rate)
+[Bedrock] Soil_Temp_L2       | unique consecutive values: 720862 / 748032 rows ( 96.4% change rate)
+[Bedrock] Soil_Temp_L3       | unique consecutive values: 678853 / 748032 rows ( 90.8% change rate)
+[Bedrock] Soil_Temp_L4       | unique consecutive values: 528606 / 748032 rows ( 70.7% change rate)
+
+================================================================================
+NUMERIC SUMMARY STATS
+================================================================================
+                               count          mean          std           min           25%           50%           75%            max
+Latitude                   2992128.0     67.703500     0.842019     66.254000     67.034750     67.733500     68.402250      69.093000
+Longitude                  2992128.0   -150.266250     0.591849   -151.274000   -150.660750   -150.348000   -149.920000    -149.095000
+smap_node_x                2992128.0     57.914062     4.546681     51.000000     54.500000     58.000000     60.750000      66.000000
+smap_node_y                2992128.0    318.039062     6.540025    307.000000    314.000000    317.000000    321.750000     331.000000
+elevation_m                2992128.0    769.760592   371.322487    261.297440    471.606910    686.224642    991.513959    1718.873913
+elev_roughness_m           2992128.0    136.593043    78.333359     13.478108     66.995742    127.557028    202.595639     325.015873
+slope_deg                  2992128.0     12.689589     8.867584      0.734103      4.860770     10.003495     20.934296      29.930798
+temperature_2m             2992128.0     -7.022142    14.127704    -52.040000    -18.232500     -6.850000      4.444500      29.350000
+precipitation              2992128.0      0.066917     0.246236      0.000000      0.000000      0.000000      0.000000      10.500000
+snow_depth_weather         2992128.0      0.402011     0.359739      0.000000      0.000000      0.400000      0.730000       1.400000
+soil_temperature_0_to_7cm  2992128.0     -0.659692     8.100685    -38.200000     -6.350000     -2.277500      4.550000      33.542000
+soil_moisture_0_to_7cm     2992128.0      0.280562     0.069852      0.031000      0.220000      0.276000      0.334000       0.444000
+Temp_K                     2992128.0    263.730007    15.760581    220.260350    251.821507    264.500510    276.322020     299.785160
+SM_Surface                 2992128.0      0.427105     0.188120      0.105372      0.237892      0.355582      0.609896       0.858780
+SM_Rootzone                2992128.0      0.552962     0.315425      0.142306      0.224292      0.380352      0.879283       0.929188
+Pressure                   2992128.0  92062.011262  3714.988987  81864.810000  89481.740000  92927.915000  94783.170000  101173.440000
+Greenness                  2992128.0      0.603544     0.295392      0.003849      0.390002      0.663653      0.847822       0.985956
+Snow_Depth_SMAP            2992128.0      0.242921     0.197862      0.000000      0.014446      0.261841      0.396118       0.854980
+Soil_Temp_L1               2992128.0    270.011423     8.605379    248.233340    263.825852    269.889160    276.025240     294.811040
+Soil_Temp_L2               2992128.0    269.643136     7.466099    248.843870    264.272445    270.589100    274.761237     289.355070
+Soil_Temp_L3               2992128.0    269.296334     6.288275    249.767760    264.834840    271.893225    273.161680     283.918400
+Soil_Temp_L4               2992128.0    269.138085     5.394137    251.368100    265.536027    272.398500    273.159520     278.295100
+

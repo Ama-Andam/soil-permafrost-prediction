@@ -1,73 +1,34 @@
-
+# Data — too large
+*.csv
+*.h5
+*.nc
+*.zarr
 preprocessed_v3/
+preprocessed_v4/
 
-models_v6/
-
-__pycache__/
-
-*.pyc
-
+# Model checkpoints — too large
+models_v3/
+models_v4/
+*.pt
 *.pth
 
-*.pt
+# Figures — generated
+figures_v3/
+figures_v4/
+*.png
 
-logs/*.out
+# Logs
+logs/
+*.log
+*.err
+*.out
 
-logs/*.err
-
-.local/
-
-miniconda3/
-
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
 *.egg-info/
 
-.bash_history
-
-.bash_logout
-
-.bash_profile
-
-.bashrc
-
-.boost_compute/
-
-.cache/
-
-.conda/
-
-.config/
-
-.emacs
-
-.git-credentials
-
-.github_token
-
-.ipynb_checkpoints/
-
-.ipython/
-
-.jupyter/
-
-.kshrc
-
-.npm/
-
-.spack/
-
-.ssh/
-
-.xdg-cache/
-
-.xdg-config/
-
-.xdg-data/
-
-.xdg-ipython/
-
-.xdg-jupyter/
-
-manuscript/
-
-DOD FOLDER2/
-
+# Environment
+.env
