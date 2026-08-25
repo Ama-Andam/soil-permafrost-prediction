@@ -1,0 +1,196 @@
+arch,target,ablation,val_r2,elapsed_s,description
+BiGRU_NoGCN,temp,no_gcn,0.8951,144.7,Remove GCN — temporal only
+BiGRU_NoGCN,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+BiGRU_NoGCN,temp,no_attention,0.9143,93.1,Remove attention — GRU only
+BiGRU_NoGCN,temp,no_laplacian,0.8933,143.1,Remove graph Laplacian loss (lam_smooth=0)
+BiGRU_NoGCN,temp,no_uncertainty,0.8808,135.4,Remove uncertainty head — point prediction only
+GCN_NoTemporal,temp,no_gcn,0.8902,28.3,Remove GCN — temporal only
+GCN_NoTemporal,temp,no_temporal,0.9157,16.4,Remove temporal encoder — GCN only
+GCN_NoTemporal,temp,no_attention,0.9157,16.7,Remove attention — GRU only
+GCN_NoTemporal,temp,no_laplacian,0.9194,16.8,Remove graph Laplacian loss (lam_smooth=0)
+GCN_NoTemporal,temp,no_uncertainty,0.9157,16.8,Remove uncertainty head — point prediction only
+DeepESN,temp,no_gcn,0.3304,66.8,Remove GCN — temporal only
+DeepESN,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+DeepESN,temp,no_attention,0.259,56.4,Remove attention — GRU only
+DeepESN,temp,no_laplacian,0.3313,70.0,Remove graph Laplacian loss (lam_smooth=0)
+DeepESN,temp,no_uncertainty,0.2959,67.2,Remove uncertainty head — point prediction only
+SpatialESN,temp,no_gcn,0.6499,51.5,Remove GCN — temporal only
+SpatialESN,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialESN,temp,no_attention,0.5855,41.7,Remove attention — GRU only
+SpatialESN,temp,no_laplacian,0.6365,41.6,Remove graph Laplacian loss (lam_smooth=0)
+SpatialESN,temp,no_uncertainty,0.5585,43.7,Remove uncertainty head — point prediction only
+GraphSAGE,temp,no_gcn,0.8971,221.5,Remove GCN — temporal only
+GraphSAGE,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+GraphSAGE,temp,no_attention,0.9269,92.3,Remove attention — GRU only
+GraphSAGE,temp,no_laplacian,0.9091,251.9,Remove graph Laplacian loss (lam_smooth=0)
+GraphSAGE,temp,no_uncertainty,0.8919,234.7,Remove uncertainty head — point prediction only
+GAT,temp,no_gcn,0.904,179.3,Remove GCN — temporal only
+GAT,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+GAT,temp,no_attention,,0.0,Remove attention — GRU only
+GAT,temp,no_laplacian,,0.0,Remove graph Laplacian loss (lam_smooth=0)
+GAT,temp,no_uncertainty,,0.0,Remove uncertainty head — point prediction only
+STGCN,temp,no_gcn,0.9029,119.1,Remove GCN — temporal only
+STGCN,temp,no_temporal,0.9004,126.0,Remove temporal encoder — GCN only
+STGCN,temp,no_attention,0.9004,131.1,Remove attention — GRU only
+STGCN,temp,no_laplacian,0.902,151.7,Remove graph Laplacian loss (lam_smooth=0)
+STGCN,temp,no_uncertainty,0.9055,132.9,Remove uncertainty head — point prediction only
+SpatialTransformer,temp,no_gcn,0.9173,45.4,Remove GCN — temporal only
+SpatialTransformer,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialTransformer,temp,no_attention,0.9119,53.0,Remove attention — GRU only
+SpatialTransformer,temp,no_laplacian,0.9127,51.5,Remove graph Laplacian loss (lam_smooth=0)
+SpatialTransformer,temp,no_uncertainty,0.9115,50.6,Remove uncertainty head — point prediction only
+SpatialInformer,temp,no_gcn,0.7258,38.0,Remove GCN — temporal only
+SpatialInformer,temp,no_temporal,0.7723,44.3,Remove temporal encoder — GCN only
+SpatialInformer,temp,no_attention,0.8361,53.8,Remove attention — GRU only
+SpatialInformer,temp,no_laplacian,0.8384,51.6,Remove graph Laplacian loss (lam_smooth=0)
+SpatialInformer,temp,no_uncertainty,0.8338,47.8,Remove uncertainty head — point prediction only
+SpatialBiGRU,temp,no_gcn,0.9144,89.4,Remove GCN — temporal only
+SpatialBiGRU,temp,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialBiGRU,temp,no_attention,0.9144,95.4,Remove attention — GRU only
+SpatialBiGRU,temp,no_laplacian,0.9088,98.0,Remove graph Laplacian loss (lam_smooth=0)
+SpatialBiGRU,temp,no_uncertainty,0.9173,101.0,Remove uncertainty head — point prediction only
+SpatialMamba,temp,no_gcn,0.891,1798.0,Remove GCN — temporal only
+SpatialMamba,temp,no_temporal,0.8281,37.8,Remove temporal encoder — GCN only
+SpatialMamba,temp,no_attention,0.9143,477.0,Remove attention — GRU only
+SpatialMamba,temp,no_laplacian,0.9022,1803.8,Remove graph Laplacian loss (lam_smooth=0)
+SpatialMamba,temp,no_uncertainty,0.894,1802.1,Remove uncertainty head — point prediction only
+SpatialS4,temp,no_gcn,0.7948,469.8,Remove GCN — temporal only
+SpatialS4,temp,no_temporal,0.7561,30.2,Remove temporal encoder — GCN only
+SpatialS4,temp,no_attention,0.8242,248.0,Remove attention — GRU only
+SpatialS4,temp,no_laplacian,0.8704,473.2,Remove graph Laplacian loss (lam_smooth=0)
+SpatialS4,temp,no_uncertainty,0.8649,477.0,Remove uncertainty head — point prediction only
+SpatialFuseMoE,temp,no_gcn,0.8984,1831.1,Remove GCN — temporal only
+SpatialFuseMoE,temp,no_temporal,0.9094,1835.0,Remove temporal encoder — GCN only
+SpatialFuseMoE,temp,no_attention,0.9094,1835.1,Remove attention — GRU only
+SpatialFuseMoE,temp,no_laplacian,0.9086,1834.1,Remove graph Laplacian loss (lam_smooth=0)
+SpatialFuseMoE,temp,no_uncertainty,0.91,1834.2,Remove uncertainty head — point prediction only
+BiGRU_NoGCN,smap,no_gcn,0.9588,131.0,Remove GCN — temporal only
+BiGRU_NoGCN,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+BiGRU_NoGCN,smap,no_attention,0.97,91.6,Remove attention — GRU only
+BiGRU_NoGCN,smap,no_laplacian,0.9539,136.5,Remove graph Laplacian loss (lam_smooth=0)
+BiGRU_NoGCN,smap,no_uncertainty,0.9624,134.8,Remove uncertainty head — point prediction only
+GCN_NoTemporal,smap,no_gcn,0.9462,24.2,Remove GCN — temporal only
+GCN_NoTemporal,smap,no_temporal,0.9611,32.9,Remove temporal encoder — GCN only
+GCN_NoTemporal,smap,no_attention,0.9611,33.2,Remove attention — GRU only
+GCN_NoTemporal,smap,no_laplacian,0.9611,31.4,Remove graph Laplacian loss (lam_smooth=0)
+GCN_NoTemporal,smap,no_uncertainty,0.959,36.7,Remove uncertainty head — point prediction only
+DeepESN,smap,no_gcn,0.6537,84.3,Remove GCN — temporal only
+DeepESN,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+DeepESN,smap,no_attention,0.5517,53.0,Remove attention — GRU only
+DeepESN,smap,no_laplacian,0.6568,85.8,Remove graph Laplacian loss (lam_smooth=0)
+DeepESN,smap,no_uncertainty,0.6235,76.3,Remove uncertainty head — point prediction only
+SpatialESN,smap,no_gcn,0.9245,51.0,Remove GCN — temporal only
+SpatialESN,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialESN,smap,no_attention,0.9061,60.6,Remove attention — GRU only
+SpatialESN,smap,no_laplacian,0.9109,55.0,Remove graph Laplacian loss (lam_smooth=0)
+SpatialESN,smap,no_uncertainty,0.9139,59.1,Remove uncertainty head — point prediction only
+GraphSAGE,smap,no_gcn,0.9571,219.9,Remove GCN — temporal only
+GraphSAGE,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+GraphSAGE,smap,no_attention,0.9737,93.1,Remove attention — GRU only
+GraphSAGE,smap,no_laplacian,0.9647,229.5,Remove graph Laplacian loss (lam_smooth=0)
+GraphSAGE,smap,no_uncertainty,0.9636,219.7,Remove uncertainty head — point prediction only
+GAT,smap,no_gcn,0.9598,185.1,Remove GCN — temporal only
+GAT,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+GAT,smap,no_attention,,0.0,Remove attention — GRU only
+GAT,smap,no_laplacian,,0.0,Remove graph Laplacian loss (lam_smooth=0)
+GAT,smap,no_uncertainty,,0.0,Remove uncertainty head — point prediction only
+STGCN,smap,no_gcn,0.9534,125.0,Remove GCN — temporal only
+STGCN,smap,no_temporal,0.9685,122.5,Remove temporal encoder — GCN only
+STGCN,smap,no_attention,0.9685,132.2,Remove attention — GRU only
+STGCN,smap,no_laplacian,0.9656,127.1,Remove graph Laplacian loss (lam_smooth=0)
+STGCN,smap,no_uncertainty,0.9648,126.3,Remove uncertainty head — point prediction only
+SpatialTransformer,smap,no_gcn,0.9532,43.8,Remove GCN — temporal only
+SpatialTransformer,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialTransformer,smap,no_attention,0.943,52.3,Remove attention — GRU only
+SpatialTransformer,smap,no_laplacian,0.9438,51.3,Remove graph Laplacian loss (lam_smooth=0)
+SpatialTransformer,smap,no_uncertainty,0.9423,49.4,Remove uncertainty head — point prediction only
+SpatialInformer,smap,no_gcn,0.8633,42.5,Remove GCN — temporal only
+SpatialInformer,smap,no_temporal,0.8616,39.4,Remove temporal encoder — GCN only
+SpatialInformer,smap,no_attention,0.9013,50.4,Remove attention — GRU only
+SpatialInformer,smap,no_laplacian,0.9029,44.6,Remove graph Laplacian loss (lam_smooth=0)
+SpatialInformer,smap,no_uncertainty,0.9002,44.9,Remove uncertainty head — point prediction only
+SpatialBiGRU,smap,no_gcn,0.969,86.6,Remove GCN — temporal only
+SpatialBiGRU,smap,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialBiGRU,smap,no_attention,0.9678,87.3,Remove attention — GRU only
+SpatialBiGRU,smap,no_laplacian,0.9628,91.3,Remove graph Laplacian loss (lam_smooth=0)
+SpatialBiGRU,smap,no_uncertainty,0.9701,96.7,Remove uncertainty head — point prediction only
+SpatialMamba,smap,no_gcn,0.6972,833.8,Remove GCN — temporal only
+SpatialMamba,smap,no_temporal,0.9017,36.5,Remove temporal encoder — GCN only
+SpatialMamba,smap,no_attention,0.9406,479.1,Remove attention — GRU only
+SpatialMamba,smap,no_laplacian,0.9314,1802.0,Remove graph Laplacian loss (lam_smooth=0)
+SpatialMamba,smap,no_uncertainty,0.9359,1803.9,Remove uncertainty head — point prediction only
+SpatialS4,smap,no_gcn,0.871,470.9,Remove GCN — temporal only
+SpatialS4,smap,no_temporal,0.8684,31.0,Remove temporal encoder — GCN only
+SpatialS4,smap,no_attention,0.8875,243.7,Remove attention — GRU only
+SpatialS4,smap,no_laplacian,0.9032,475.4,Remove graph Laplacian loss (lam_smooth=0)
+SpatialS4,smap,no_uncertainty,0.9011,475.9,Remove uncertainty head — point prediction only
+SpatialFuseMoE,smap,no_gcn,0.9352,1829.2,Remove GCN — temporal only
+SpatialFuseMoE,smap,no_temporal,0.9427,1837.6,Remove temporal encoder — GCN only
+SpatialFuseMoE,smap,no_attention,0.9427,1834.3,Remove attention — GRU only
+SpatialFuseMoE,smap,no_laplacian,0.9439,1836.1,Remove graph Laplacian loss (lam_smooth=0)
+SpatialFuseMoE,smap,no_uncertainty,0.9426,1831.8,Remove uncertainty head — point prediction only
+BiGRU_NoGCN,moist,no_gcn,0.5891,121.4,Remove GCN — temporal only
+BiGRU_NoGCN,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+BiGRU_NoGCN,moist,no_attention,0.5872,81.6,Remove attention — GRU only
+BiGRU_NoGCN,moist,no_laplacian,0.868,137.3,Remove graph Laplacian loss (lam_smooth=0)
+BiGRU_NoGCN,moist,no_uncertainty,0.209,117.1,Remove uncertainty head — point prediction only
+GCN_NoTemporal,moist,no_gcn,0.7349,13.3,Remove GCN — temporal only
+GCN_NoTemporal,moist,no_temporal,0.7434,18.3,Remove temporal encoder — GCN only
+GCN_NoTemporal,moist,no_attention,0.7434,18.7,Remove attention — GRU only
+GCN_NoTemporal,moist,no_laplacian,0.9088,32.8,Remove graph Laplacian loss (lam_smooth=0)
+GCN_NoTemporal,moist,no_uncertainty,0.695,40.2,Remove uncertainty head — point prediction only
+DeepESN,moist,no_gcn,0.5791,74.1,Remove GCN — temporal only
+DeepESN,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+DeepESN,moist,no_attention,0.527,49.5,Remove attention — GRU only
+DeepESN,moist,no_laplacian,0.6258,80.8,Remove graph Laplacian loss (lam_smooth=0)
+DeepESN,moist,no_uncertainty,0.3891,80.8,Remove uncertainty head — point prediction only
+SpatialESN,moist,no_gcn,0.5757,53.4,Remove GCN — temporal only
+SpatialESN,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialESN,moist,no_attention,0.7705,57.0,Remove attention — GRU only
+SpatialESN,moist,no_laplacian,0.8294,61.3,Remove graph Laplacian loss (lam_smooth=0)
+SpatialESN,moist,no_uncertainty,0.5868,55.0,Remove uncertainty head — point prediction only
+GraphSAGE,moist,no_gcn,0.7109,216.9,Remove GCN — temporal only
+GraphSAGE,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+GraphSAGE,moist,no_attention,0.8214,89.0,Remove attention — GRU only
+GraphSAGE,moist,no_laplacian,0.8841,230.3,Remove graph Laplacian loss (lam_smooth=0)
+GraphSAGE,moist,no_uncertainty,0.6808,231.7,Remove uncertainty head — point prediction only
+GAT,moist,no_gcn,0.2509,171.2,Remove GCN — temporal only
+GAT,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+GAT,moist,no_attention,,0.0,Remove attention — GRU only
+GAT,moist,no_laplacian,,0.0,Remove graph Laplacian loss (lam_smooth=0)
+GAT,moist,no_uncertainty,,0.0,Remove uncertainty head — point prediction only
+STGCN,moist,no_gcn,0.6722,117.4,Remove GCN — temporal only
+STGCN,moist,no_temporal,0.774,129.7,Remove temporal encoder — GCN only
+STGCN,moist,no_attention,0.774,133.0,Remove attention — GRU only
+STGCN,moist,no_laplacian,0.8732,125.9,Remove graph Laplacian loss (lam_smooth=0)
+STGCN,moist,no_uncertainty,0.5555,127.5,Remove uncertainty head — point prediction only
+SpatialTransformer,moist,no_gcn,0.2445,25.8,Remove GCN — temporal only
+SpatialTransformer,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialTransformer,moist,no_attention,0.5157,51.1,Remove attention — GRU only
+SpatialTransformer,moist,no_laplacian,0.7655,47.5,Remove graph Laplacian loss (lam_smooth=0)
+SpatialTransformer,moist,no_uncertainty,0.2953,47.7,Remove uncertainty head — point prediction only
+SpatialInformer,moist,no_gcn,0.1926,42.8,Remove GCN — temporal only
+SpatialInformer,moist,no_temporal,0.3242,39.9,Remove temporal encoder — GCN only
+SpatialInformer,moist,no_attention,0.3482,49.9,Remove attention — GRU only
+SpatialInformer,moist,no_laplacian,0.5934,49.0,Remove graph Laplacian loss (lam_smooth=0)
+SpatialInformer,moist,no_uncertainty,0.2166,48.4,Remove uncertainty head — point prediction only
+SpatialBiGRU,moist,no_gcn,0.2375,89.4,Remove GCN — temporal only
+SpatialBiGRU,moist,no_temporal,,0.0,Remove temporal encoder — GCN only
+SpatialBiGRU,moist,no_attention,0.5999,95.7,Remove attention — GRU only
+SpatialBiGRU,moist,no_laplacian,0.8825,96.7,Remove graph Laplacian loss (lam_smooth=0)
+SpatialBiGRU,moist,no_uncertainty,0.2899,91.4,Remove uncertainty head — point prediction only
+SpatialMamba,moist,no_gcn,0.299,1674.9,Remove GCN — temporal only
+SpatialMamba,moist,no_temporal,0.5504,36.6,Remove temporal encoder — GCN only
+SpatialMamba,moist,no_attention,0.1577,216.4,Remove attention — GRU only
+SpatialMamba,moist,no_laplacian,0.154,715.9,Remove graph Laplacian loss (lam_smooth=0)
+SpatialMamba,moist,no_uncertainty,0.0903,714.1,Remove uncertainty head — point prediction only
+SpatialS4,moist,no_gcn,0.3732,469.6,Remove GCN — temporal only
+SpatialS4,moist,no_temporal,0.5,35.7,Remove temporal encoder — GCN only
+SpatialS4,moist,no_attention,0.5193,247.0,Remove attention — GRU only
+SpatialS4,moist,no_laplacian,0.6457,469.0,Remove graph Laplacian loss (lam_smooth=0)
+SpatialS4,moist,no_uncertainty,0.349,475.6,Remove uncertainty head — point prediction only
+SpatialFuseMoE,moist,no_gcn,0.3703,1827.3,Remove GCN — temporal only
+SpatialFuseMoE,moist,no_temporal,0.5268,1825.7,Remove temporal encoder — GCN only
+SpatialFuseMoE,moist,no_attention,0.5268,1829.7,Remove attention — GRU only
+SpatialFuseMoE,moist,no_laplacian,0.6396,1829.5,Remove graph Laplacian loss (lam_smooth=0)
+SpatialFuseMoE,moist,no_uncertainty,0.3258,1829.8,Remove uncertainty head — point prediction only

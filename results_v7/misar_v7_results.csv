@@ -1,0 +1,4 @@
+Method,RMSE,R2,Time_s,Note
+Behavior-guided (ideal parallel),inf,,195.02,Ideal parallel estimate
+Behavior-guided (sequential),inf,,780.06,Sequential execution
+Centralized,,,0.0,Full dataset training
