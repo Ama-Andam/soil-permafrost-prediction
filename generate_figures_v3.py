@@ -323,8 +323,7 @@ def fig_convergence_all_N(arch="STGCN"):
                      marker="o", ms=4, alpha=0.85,
                      label=f"N={n} spatial workers")
 
-        ax.axhline(cent_rmse, color=GENERAL_COLOR, lw=2.5, ls="--",
-                    label="General model", zorder=5)
+        ax.scatter([18],[cent_rmse],color=GENERAL_COLOR,s=200,marker="*",zorder=10,label=f"General model ({cent_rmse:.3f})")
         ax.set_xlabel("Global Round", fontsize=12)
         ax.set_ylabel("Wetland Val RMSE (residual)", fontsize=11)
         ax.set_title(f"Convergence | {arch_name}", fontsize=12, fontweight="bold")
