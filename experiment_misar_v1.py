@@ -673,13 +673,21 @@ def get_subsets(n_workers):
 
     if n_workers==2:
 
-        return [SITE_LOCS['Bedrock']+SITE_LOCS['Transition'],
+        half=len(SEEN)//2
 
-                SITE_LOCS['Upland']]
+        return [SEEN[:half],SEEN[half:]]
 
     if n_workers==4:
 
-        return [SITE_LOCS[s] for s in ['Bedrock','Transition','Upland']]+[SEEN[:48]]
+        q=len(SEEN)//4
+
+        return [SEEN[i*q:(i+1)*q] for i in range(4)]
+
+    if n_workers==8:
+
+        q=len(SEEN)//8
+
+        return [SEEN[i*q:(i+1)*q] for i in range(8)]
 
     return [SEEN]
 
@@ -743,7 +751,7 @@ def misar_worker(worker_id, theta_cpu, loc_subset, arch_cls, hcfg,
 
     
 
-    misar=MISAR(H=H,history_len=5,base_angle=0.15,base_mag=0.1)
+    misar=MISAR(H=H,history_len=5,base_angle=0.05,base_mag=0.05)
 
     theta_start={k:v.clone().cpu() for k,v in model.state_dict().items()}
 
@@ -832,12 +840,12 @@ def misar_worker(worker_id, theta_cpu, loc_subset, arch_cls, hcfg,
                 # MISAR rotation + magnitude
 
                 g_perturbed=misar.apply_uncertainty(g,delta_angle,delta_mag)
+                param.grad.data=torch.tensor(g_perturbed.reshape(param.grad.shape),dtype=param.dtype).to(param.device)
 
-                param.grad.data=torch.tensor(
 
-                    g_perturbed.reshape(param.grad.shape),
 
-                    dtype=param.dtype)
+
+
 
         
 
@@ -1255,7 +1263,7 @@ if HAS_RAY:
 
                     g_p=misar_w.apply(g,da,dm)
 
-                    param.grad.data=torch.tensor(g_p.reshape(param.grad.shape),dtype=param.dtype)
+                    param.grad.data=torch.tensor(g_p.reshape(param.grad.shape),dtype=param.dtype).to(param.device)
 
                 for param in model.parameters():
 
@@ -1357,9 +1365,9 @@ def aggregate(theta_t, behaviors, lr=0.85):
 
 MODELS_TO_RUN=['STGCN','SpatialMamba']
 
-N_WORKERS_LIST=[2,4]
+N_WORKERS_LIST=[8]
 
-T_ROUNDS=18; K_STEPS=50; LR=1e-3; H_LOOKAHEAD=3
+T_ROUNDS=24; K_STEPS=50; LR=1e-3; H_LOOKAHEAD=3
 
 
 
@@ -1418,6 +1426,7 @@ for arch_name in MODELS_TO_RUN:
 
 
     val_loader=build_loader(split='test',bs=4,max_s=400)
+    time_loader=build_loader(split="test",bs=4,max_s=400)
 
 
 
@@ -1499,11 +1508,12 @@ for arch_name in MODELS_TO_RUN:
 
             # Aggregate
 
-            theta_cand,alphas,betas,gamma,mean_unc=aggregate(theta_t,behaviors,LR)
+            theta_cand,alphas,betas,gamma,mean_unc=aggregate(theta_t,behaviors,0.85)
 
             global_model.load_state_dict({k:v.to(DEVICE) for k,v in theta_cand.items()})
 
             rmse,r2=evaluate(global_model,val_loader)
+            time_rmse,time_r2=evaluate(global_model,time_loader,locs=None)
 
 
 
@@ -1537,7 +1547,7 @@ for arch_name in MODELS_TO_RUN:
 
 
 
-            print(f'  Rnd {rnd:02d} | RMSE={rmse:.4f} R²={r2:.4f} γ={gamma:.3f} '
+            print(f'  Rnd {rnd:02d} | RMSE={rmse:.4f} R²={r2:.4f} T_R²={time_r2:.4f} γ={gamma:.3f} '
 
                    f'U_misar={mean_unc:.3f} α={[f"{a:.2f}" for a in alphas]} | {status}')
 
@@ -1559,7 +1569,7 @@ for arch_name in MODELS_TO_RUN:
 
                 worker_losses=[b['final_loss'] for b in behaviors],
 
-                elapsed=elapsed
+                time_r2=time_r2,time_rmse=time_rmse,elapsed=elapsed
 
             ))
 
