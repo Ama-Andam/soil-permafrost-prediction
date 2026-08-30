@@ -1,0 +1,5 @@
+arch,n_workers,best_r2,best_rmse,cent_r2,cent_rmse,ideal_time_s,total_time_s
+STGCN,2,0.9544,1.536,0.9166,0.6119,340.76,681.51
+STGCN,4,0.9541,1.5398,0.9166,0.6119,324.2,1296.81
+SpatialMamba,2,0.9513,1.5864,0.9207,0.5959,653.89,1307.79
+SpatialMamba,4,0.9513,1.5864,0.9207,0.5959,643.1,2572.41
